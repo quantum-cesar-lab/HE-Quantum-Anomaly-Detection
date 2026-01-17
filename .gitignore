@@ -29,3 +29,5 @@ kaggle.json
 # Logs e Saídas de Treinamento
 scripts/logs/
 notebooks/.ipynb_checkpoints/
+
+.DS_store
