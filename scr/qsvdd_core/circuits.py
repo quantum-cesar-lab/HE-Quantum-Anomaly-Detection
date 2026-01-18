@@ -87,3 +87,20 @@ class QSVDDCircuit:
 
         self._get_rx_layer(qc, param_pack5)
         return qc
+
+    def qc_complete_design(self, amplitude_array, params, method="qiskit"):
+        qc = self._get_empty_circuit()
+        qubits = list(range(self.n_qubits))
+        qc.compose(
+            self.feature_mapping(amplitude_array, method=method),
+            qubits=qubits,
+            inplace=True)
+
+        qc.compose(
+            self.ansatz(params),
+            qubits=qubits,
+            inplace=True
+        )
+
+        return qc
+
