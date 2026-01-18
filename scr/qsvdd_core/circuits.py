@@ -1,5 +1,9 @@
 from qclib.state_preparation.ucge import UCGEInitialize
 from qclib.state_preparation.dcsp import DcspInitialize
+from qclib.state_preparation.baa_lowrank import BaaLowRankInitialize
+from qclib.state_preparation.bdsp import BdspInitialize
+from qclib.state_preparation.isometry import IsometryInitialize
+
 from qiskit import QuantumCircuit
 from qiskit.circuit.library import CU3Gate, StatePreparation
 
@@ -33,6 +37,15 @@ class QSVDDCircuit:
             return qc
         elif method == 'dcsp':
             qc = DcspInitialize(amplitude_array).definition
+            return qc
+        elif method == 'baa_lowrank':
+            qc = BaaLowRankInitialize(amplitude_array).definition
+            return qc
+        elif method == 'bdsp':
+            qc = BdspInitialize(amplitude_array).definition
+            return qc
+        elif method == 'isometry':
+            qc = IsometryInitialize(amplitude_array).definition
             return qc
         elif method == 'qiskit':
             gate = StatePreparation(amplitude_array)
