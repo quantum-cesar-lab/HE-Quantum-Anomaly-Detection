@@ -5,7 +5,10 @@ from qclib.state_preparation.bdsp import BdspInitialize
 from qclib.state_preparation.isometry import IsometryInitialize
 
 from qiskit import QuantumCircuit
-from qiskit.circuit.library import CU3Gate, StatePreparation
+from qiskit.circuit.library import StatePreparation
+from qiskit import transpile
+
+import pennylane as qml
 
 
 class QSVDDCircuit:
@@ -21,29 +24,46 @@ class QSVDDCircuit:
         qc.append(gate, range(self.n_qubits))
         return qc
 
-    def _get_rx_layer(self, qc, param_pack):
+    def _get_rx_layer(self, param_pack):
         n = self.n_qubits
         for i in range(n):
-            qc.rx(param_pack[i], i)
-        return qc
+            qml.RX(param_pack[i], wires=i)
 
-    def _get_cyclic_ansatz_layer(self, qc, param_pack):
+    def _get_cyclic_ansatz_layer(self, param_pack):
 
         n = self.n_qubits
 
         for i in range(0, n - 1, 2):
             p = param_pack[i * 3 : (i + 1) * 3]
-            qc.append(CU3Gate(p[0], p[1], p[2]), [i, i + 1])
+            qml.CRot(p[0], p[1], p[2], wires=[i, i + 1])
 
         for i in range(1, n - 1, 2):
             p = param_pack[i * 3 : (i + 1) * 3]
-            qc.append(CU3Gate(p[0], p[1], p[2]), [i, i + 1])
+            qml.CRot(p[0], p[1], p[2], wires=[i, i + 1])
 
         if n > 1:
             p = param_pack[(n - 1) * 3 : n * 3]
-            qc.append(CU3Gate(p[0], p[1], p[2]), [n - 1, 0])
+            qml.CRot(p[0], p[1], p[2], wires=[n - 1, 0])
 
-        return qc
+    def ansatz(self, params):
+
+        n = self.n_qubits
+
+        param_pack1 = params[:n]
+        param_pack2 = params[n : 4 * n]
+        param_pack3 = params[4 * n : 5 * n]
+        param_pack4 = params[5 * n : 8 * n]
+        param_pack5 = params[8 * n :]  # 9*n parameters
+
+        self._get_rx_layer(param_pack1)
+
+        self._get_cyclic_ansatz_layer(param_pack2)
+
+        self._get_rx_layer(param_pack3)
+
+        self._get_cyclic_ansatz_layer(param_pack4)
+
+        self._get_rx_layer(param_pack5)
 
     def feature_mapping(self, amplitude_array, method="qiskit"):
         """
@@ -64,43 +84,12 @@ class QSVDDCircuit:
                 f"Method '{method}' not recognized. Available: {list(initializers.keys())}"
             )
 
-        return initializers[method]()
+        transpiled_fm = transpile(initializers[method](), basis_gates=["u", "cx"])
 
-    def ansatz(self, params):
-
-        qc = self._get_empty_circuit()
-        n = self.n_qubits
-
-        param_pack1 = params[:n]
-        param_pack2 = params[n : 4 * n]
-        param_pack3 = params[4 * n : 5 * n]
-        param_pack4 = params[5 * n : 8 * n]
-        param_pack5 = params[8 * n :]  # 9*n parameters
-
-        self._get_rx_layer(qc, param_pack1)
-
-        self._get_cyclic_ansatz_layer(qc, param_pack2)
-
-        self._get_rx_layer(qc, param_pack3)
-
-        self._get_cyclic_ansatz_layer(qc, param_pack4)
-
-        self._get_rx_layer(qc, param_pack5)
-        return qc
+        return qml.from_qiskit(transpiled_fm)
 
     def qc_complete_design(self, amplitude_array, params, method="qiskit"):
-        qc = self._get_empty_circuit()
-        qubits = list(range(self.n_qubits))
-        qc.compose(
-            self.feature_mapping(amplitude_array, method=method),
-            qubits=qubits,
-            inplace=True)
 
-        qc.compose(
-            self.ansatz(params),
-            qubits=qubits,
-            inplace=True
-        )
-
-        return qc
-
+        mapping_fn = self.feature_mapping(amplitude_array, method=method)
+        mapping_fn(wires=range(self.n_qubits))
+        self.ansatz(params)
