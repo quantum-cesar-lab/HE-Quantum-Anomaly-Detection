@@ -19,4 +19,3 @@ class QuantumEngine:
         predictions = np.stack([self.quantum_circuit(x, params) for x in X])
         loss_value = np.mean((predictions - Y) ** 2)
         return loss_value
-

@@ -90,7 +90,7 @@ class QSVDDCircuit:
             raise ValueError(
                 f"Method '{method}' not recognized. Available: {list(initializers.keys())}"
             )
-        qc_decomposed = initializers[method]().decompose().decompose()
+        qc_decomposed = initializers[method]().decompose()
 
         transpiled_fm = transpile(qc_decomposed, basis_gates=["u", "cx"])
 
@@ -101,9 +101,12 @@ class QSVDDCircuit:
 
         mapping_fn = self.feature_mapping(amplitude_array, method=method)
         mapping_fn(wires=range(self.n_qubits))
+
         self.ansatz(params)
 
-        result = (qml.expval(qml.PauliX(0) @ qml.PauliX(2)),
-                  qml.expval(qml.PauliY(0) @ qml.PauliY(2)),
-                  qml.expval(qml.PauliZ(0) @ qml.PauliZ(2)))
+        result = (
+            qml.expval(qml.PauliX(0) @ qml.PauliX(2)),
+            qml.expval(qml.PauliY(0) @ qml.PauliY(2)),
+            qml.expval(qml.PauliZ(0) @ qml.PauliZ(2)),
+        )
         return result
