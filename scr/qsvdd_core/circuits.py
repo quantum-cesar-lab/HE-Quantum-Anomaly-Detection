@@ -90,9 +90,14 @@ class QSVDDCircuit:
             raise ValueError(
                 f"Method '{method}' not recognized. Available: {list(initializers.keys())}"
             )
-        qc_decomposed = initializers[method]().decompose()
-
-        transpiled_fm = transpile(qc_decomposed, basis_gates=["u", "cx"])
+        qc_decomposed = initializers[method]().decompose().decompose()
+        # transpiled_fm = transpile(qc_decomposed, basis_gates=["u", "cx"])
+        transpiled_fm = transpile(
+            qc_decomposed,
+            basis_gates=['u', 'cx'],
+            optimization_level=1,
+            approximation_degree=1e-6
+        )
 
         return qml.from_qiskit(transpiled_fm)
 
