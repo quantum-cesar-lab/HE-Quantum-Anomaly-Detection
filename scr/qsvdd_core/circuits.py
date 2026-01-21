@@ -9,6 +9,7 @@ from qiskit.circuit.library import StatePreparation
 from qiskit import transpile
 
 import pennylane as qml
+import numpy as np
 
 
 class QSVDDCircuit:
@@ -65,10 +66,16 @@ class QSVDDCircuit:
 
         self._get_rx_layer(param_pack5)
 
-    def feature_mapping(self, amplitude_array, method="qiskit"):
+    def feature_mapping(self, amplitude_array, method="baa_lowrank"):
         """
         Initializes quantum state using various state preparation methods.
         """
+        if hasattr(amplitude_array, "numpy"):
+            amplitude_array = amplitude_array.numpy()
+
+        norm = np.linalg.norm(amplitude_array)
+        if norm > 0:
+            amplitude_array = amplitude_array / norm
 
         initializers = {
             "ucge": lambda: UCGEInitialize(amplitude_array).definition,
@@ -83,13 +90,20 @@ class QSVDDCircuit:
             raise ValueError(
                 f"Method '{method}' not recognized. Available: {list(initializers.keys())}"
             )
+        qc_decomposed = initializers[method]().decompose().decompose()
 
-        transpiled_fm = transpile(initializers[method](), basis_gates=["u", "cx"])
+        transpiled_fm = transpile(qc_decomposed, basis_gates=["u", "cx"])
 
         return qml.from_qiskit(transpiled_fm)
 
-    def qc_complete_design(self, amplitude_array, params, method="qiskit"):
+    # Transforma a lógica do circuito em um QNode executável
+    def qc_complete_design(self, amplitude_array, params, method="baa_lowrank"):
 
         mapping_fn = self.feature_mapping(amplitude_array, method=method)
         mapping_fn(wires=range(self.n_qubits))
         self.ansatz(params)
+
+        result = (qml.expval(qml.PauliX(0) @ qml.PauliX(2)),
+                  qml.expval(qml.PauliY(0) @ qml.PauliY(2)),
+                  qml.expval(qml.PauliZ(0) @ qml.PauliZ(2)))
+        return result
