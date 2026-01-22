@@ -12,18 +12,67 @@ import pennylane as qml
 import numpy as np
 
 
-class QSVDDCircuit:
+class QCNN:
     def __init__(self, n_qubits):
         self.n_qubits = n_qubits
 
-    def _get_empty_circuit(self):
-        return QuantumCircuit(self.n_qubits)
+    @staticmethod
+    def _get_su_4_operator(params, wires):
+        qml.U3(params[0], params[1], params[2], wires=wires[0])
+        qml.U3(params[3], params[4], params[5], wires=wires[1])
+        qml.CNOT(wires=[wires[0], wires[1]])
+        qml.RY(params[6], wires=wires[0])
+        qml.RZ(params[7], wires=wires[1])
+        qml.CNOT(wires=[wires[1], wires[0]])
+        qml.RY(params[8], wires=wires[0])
+        qml.CNOT(wires=[wires[0], wires[1]])
+        qml.U3(params[9], params[10], params[11], wires=wires[0])
+        qml.U3(params[12], params[13], params[14], wires=wires[1])
 
-    def _get_qiskit_state_prep(self, amplitude_array):
-        qc = self._get_empty_circuit()
-        gate = StatePreparation(amplitude_array)
-        qc.append(gate, range(self.n_qubits))
-        return qc
+    @staticmethod
+    def _get_conv_layer_1(operator, params):
+        operator(params, wires=[0, 1])
+        operator(params, wires=[2, 3])
+        operator(params, wires=[4, 0])
+        operator(params, wires=[1, 2])
+        operator(params, wires=[3, 4])
+
+    @staticmethod
+    def _get_conv_layer_2(operator, params):
+        operator(params, wires=[0, 1])
+        operator(params, wires=[2, 3])
+        operator(params, wires=[0, 3])
+        operator(params, wires=[1, 2])
+
+    @staticmethod
+    def _get_conv_layer_3(operator, params):
+        operator(params, wires=[0, 1])
+
+    def qcnn_ansatz_without_pooling(self, operator, params, number_params):  # 75
+        param1 = params[0:number_params]
+        param2 = params[number_params : 2 * number_params]
+        param3 = params[2 * number_params : 3 * number_params]
+        param4 = params[3 * number_params : 4 * number_params]
+        param5 = params[4 * number_params : 5 * number_params]
+
+        self._get_conv_layer_1(operator, param1)
+        self._get_conv_layer_1(operator, param2)
+        self._get_conv_layer_2(operator, param3)
+        self._get_conv_layer_2(operator, param4)
+        self._get_conv_layer_3(operator, param5)
+
+        result = (
+            qml.expval(qml.PauliX(0) @ qml.PauliX(2)),
+            qml.expval(qml.PauliY(0) @ qml.PauliY(2)),
+            qml.expval(qml.PauliZ(0) @ qml.PauliZ(2)),
+        )
+
+        return result
+
+
+class ProposedVQC:
+    def __init__(self, n_qubits):
+        self.n_qubits = n_qubits
 
     def _get_rx_layer(self, param_pack):
         n = self.n_qubits
@@ -46,8 +95,7 @@ class QSVDDCircuit:
             p = param_pack[(n - 1) * 3 : n * 3]
             qml.CRot(p[0], p[1], p[2], wires=[n - 1, 0])
 
-    def ansatz(self, params):
-
+    def proposed_ansatz(self, params):
         n = self.n_qubits
 
         param_pack1 = params[:n]
@@ -66,12 +114,29 @@ class QSVDDCircuit:
 
         self._get_rx_layer(param_pack5)
 
+
+class QSVDDCircuit:
+    def __init__(self, n_qubits):
+        self.n_qubits = n_qubits
+
+    def _get_empty_circuit(self):
+        return QuantumCircuit(self.n_qubits)
+
+    def _get_qiskit_state_prep(self, amplitude_array):
+        qc = self._get_empty_circuit()
+        gate = StatePreparation(amplitude_array)
+        qc.append(gate, range(self.n_qubits))
+        return qc
+
     def feature_mapping(self, amplitude_array, method="baa_lowrank"):
         """
         Initializes quantum state using various state preparation methods.
         """
-        if hasattr(amplitude_array, "numpy"):
-            amplitude_array = amplitude_array.numpy()
+
+        if method == "pennylane":
+            return lambda wires: qml.AmplitudeEmbedding(
+                amplitude_array, wires=wires, pad_with=0.0, normalize=True
+            )
 
         norm = np.linalg.norm(amplitude_array)
         if norm > 0:
@@ -98,11 +163,11 @@ class QSVDDCircuit:
     # Transforma a lógica do circuito em um QNode executável
     def qc_complete_design(self, amplitude_array, params, method="baa_lowrank"):
 
-        # mapping_fn = self.feature_mapping(amplitude_array, method=method)
-        # mapping_fn(wires=range(self.n_qubits))
-        qml.AmplitudeEmbedding(amplitude_array, wires=range(self.n_qubits), pad_with=0., normalize=True)
+        mapping_fn = self.feature_mapping(amplitude_array, method=method)
+        mapping_fn(wires=range(self.n_qubits))
 
-        self.ansatz(params)
+        ansatz = ProposedVQC(self.n_qubits)
+        ansatz.proposed_ansatz(params)
 
         result = (
             qml.expval(qml.PauliX(0) @ qml.PauliX(2)),
