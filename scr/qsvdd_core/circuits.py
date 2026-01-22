@@ -91,21 +91,16 @@ class QSVDDCircuit:
                 f"Method '{method}' not recognized. Available: {list(initializers.keys())}"
             )
         qc_decomposed = initializers[method]().decompose().decompose()
-        # transpiled_fm = transpile(qc_decomposed, basis_gates=["u", "cx"])
-        transpiled_fm = transpile(
-            qc_decomposed,
-            basis_gates=['u', 'cx'],
-            optimization_level=1,
-            approximation_degree=1e-6
-        )
+        transpiled_fm = transpile(qc_decomposed, basis_gates=["u", "cx"])
 
         return qml.from_qiskit(transpiled_fm)
 
     # Transforma a lógica do circuito em um QNode executável
     def qc_complete_design(self, amplitude_array, params, method="baa_lowrank"):
 
-        mapping_fn = self.feature_mapping(amplitude_array, method=method)
-        mapping_fn(wires=range(self.n_qubits))
+        # mapping_fn = self.feature_mapping(amplitude_array, method=method)
+        # mapping_fn(wires=range(self.n_qubits))
+        qml.AmplitudeEmbedding(amplitude_array, wires=range(self.n_qubits), pad_with=0., normalize=True)
 
         self.ansatz(params)
 
