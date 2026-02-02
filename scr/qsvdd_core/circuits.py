@@ -160,7 +160,7 @@ class QSVDDCircuit:
         return qml.from_qiskit(transpiled_fm)
 
     # Transforma a lógica do circuito em um QNode executável
-    def qc_complete_design(self, amplitude_array, params, method="baa_lowrank"):
+    def qc_complete_design(self, amplitude_array, params, method="pennylane"):
 
         mapping_fn = self.feature_mapping(amplitude_array, method=method)
         mapping_fn(wires=range(self.n_qubits))

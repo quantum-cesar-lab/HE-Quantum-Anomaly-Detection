@@ -6,6 +6,7 @@ import pennylane as qml
 def circuit_training(X_train, Y_train, n_params, batch_size, learning_rate, steps):
     engine = QuantumEngine(n_qubits=5)
 
+    np.random.seed(42)
     params = np.random.randn(n_params, requires_grad=True)
     opt = qml.AdamOptimizer(stepsize=learning_rate)
 
