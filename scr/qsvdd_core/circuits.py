@@ -16,8 +16,7 @@ class QCNN:
     def __init__(self, n_qubits):
         self.n_qubits = n_qubits
 
-    @staticmethod
-    def _get_su_4_operator(params, wires):
+    def _get_su_4_operator(self, params, wires):
         qml.U3(params[0], params[1], params[2], wires=wires[0])
         qml.U3(params[3], params[4], params[5], wires=wires[1])
         qml.CNOT(wires=[wires[0], wires[1]])
@@ -29,45 +28,45 @@ class QCNN:
         qml.U3(params[9], params[10], params[11], wires=wires[0])
         qml.U3(params[12], params[13], params[14], wires=wires[1])
 
-    @staticmethod
-    def _get_conv_layer_1(operator, params):
-        operator(params, wires=[0, 1])
-        operator(params, wires=[2, 3])
-        operator(params, wires=[4, 0])
-        operator(params, wires=[1, 2])
-        operator(params, wires=[3, 4])
 
-    @staticmethod
-    def _get_conv_layer_2(operator, params):
-        operator(params, wires=[0, 1])
-        operator(params, wires=[2, 3])
-        operator(params, wires=[0, 3])
-        operator(params, wires=[1, 2])
+    def _get_conv_layer_1(self, params):
+        self._get_su_4_operator(params, wires=[0, 1])
+        self._get_su_4_operator(params, wires=[2, 3])
+        self._get_su_4_operator(params, wires=[4, 0])
+        self._get_su_4_operator(params, wires=[1, 2])
+        self._get_su_4_operator(params, wires=[3, 4])
 
-    @staticmethod
-    def _get_conv_layer_3(operator, params):
-        operator(params, wires=[0, 1])
 
-    def qcnn_ansatz_without_pooling(self, operator, params, number_params):  # 75
+    def _get_conv_layer_2(self, params):
+        self._get_su_4_operator(params, wires=[0, 1])
+        self._get_su_4_operator(params, wires=[2, 3])
+        self._get_su_4_operator(params, wires=[0, 3])
+        self._get_su_4_operator(params, wires=[1, 2])
+
+
+    def _get_conv_layer_3(self, params):
+        self._get_su_4_operator(params, wires=[0, 1])
+
+    def qcnn_ansatz_without_pooling(self, params, number_params=75):  # 75
         param1 = params[0:number_params]
         param2 = params[number_params : 2 * number_params]
         param3 = params[2 * number_params : 3 * number_params]
         param4 = params[3 * number_params : 4 * number_params]
         param5 = params[4 * number_params : 5 * number_params]
 
-        self._get_conv_layer_1(operator, param1)
-        self._get_conv_layer_1(operator, param2)
-        self._get_conv_layer_2(operator, param3)
-        self._get_conv_layer_2(operator, param4)
-        self._get_conv_layer_3(operator, param5)
+        self._get_conv_layer_1(param1)
+        self._get_conv_layer_1(param2)
+        self._get_conv_layer_2(param3)
+        self._get_conv_layer_2(param4)
+        self._get_conv_layer_3(param5)
 
-        result = (
-            qml.expval(qml.PauliX(0) @ qml.PauliX(2)),
-            qml.expval(qml.PauliY(0) @ qml.PauliY(2)),
-            qml.expval(qml.PauliZ(0) @ qml.PauliZ(2)),
-        )
+        # result = (
+        #     qml.expval(qml.PauliX(0) @ qml.PauliX(2)),
+        #     qml.expval(qml.PauliY(0) @ qml.PauliY(2)),
+        #     qml.expval(qml.PauliZ(0) @ qml.PauliZ(2)),
+        # )
 
-        return result
+        # return result
 
 
 class ProposedVQC:
@@ -166,8 +165,10 @@ class QSVDDCircuit:
         mapping_fn = self.feature_mapping(amplitude_array, method=method)
         mapping_fn(wires=range(self.n_qubits))
 
-        ansatz = ProposedVQC(self.n_qubits)
-        ansatz.proposed_ansatz(params)
+        # ansatz = ProposedVQC(self.n_qubits)
+        # ansatz.proposed_ansatz(params)
+        ansatz = QCNN(self.n_qubits)
+        ansatz.qcnn_ansatz_without_pooling(params)
 
         result = (
             qml.expval(qml.PauliX(0) @ qml.PauliX(2)),
