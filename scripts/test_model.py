@@ -4,13 +4,13 @@ from sklearn.metrics import roc_curve, roc_auc_score
 from scr.qsvdd_core.engine import QuantumEngine
 
 
-def test(n_train, X_test, Y_test, trained_params, center_train):
+def test(n_train, X_test, Y_test, trained_params, center_train, noisy=False):
     start_time = time.time()
 
     y_true_local = []
     y_pred_local = []
 
-    engine = QuantumEngine(5)
+    engine = QuantumEngine(5, noisy=noisy)
 
     for i in range(2):
         step_start_time = time.time()
