@@ -3,8 +3,10 @@ from scr.qsvdd_core.engine import QuantumEngine
 import pennylane as qml
 
 
-def circuit_training(X_train, Y_train, n_params, batch_size, learning_rate, steps):
-    engine = QuantumEngine(n_qubits=5)
+def circuit_training(
+    X_train, Y_train, n_params, batch_size, learning_rate, steps, noisy=False
+):
+    engine = QuantumEngine(n_qubits=5, noisy=noisy)
 
     np.random.seed(42)
     params = np.random.randn(n_params, requires_grad=True)
