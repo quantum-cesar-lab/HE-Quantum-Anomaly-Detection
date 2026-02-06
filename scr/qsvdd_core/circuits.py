@@ -164,8 +164,8 @@ class LCQHNN:
 
     def lcqhnn_ansatz(self, params):
         """
-        Implementação corrigida do Ansatz LCQHNN para 5 qubits.
-        params: Shape (num_layers, num_qubits) -> ex: (4, 5)
+        Implementação do Ansatz LCQHNN [1] para 5 qubits.
+        [1] https://arxiv.org/pdf/2412.02059
         """
         # CORREÇÃO DO ERRO: params.shape é uma tupla, pegamos o primeiro índice
 
@@ -189,6 +189,23 @@ class LCQHNN:
         # Aplica Hadamard no primeiro qubit para preparar a base de medição [2]
         qml.Hadamard(wires=0)
 
+class PQC:
+    def __init__(self, n_qubits):
+        self.n_qubits = n_qubits
+
+    def pqc_ansatz(self, params):
+        """
+        PQC of https://arxiv.org/pdf/2308.16005
+        """
+        for i in range(self.n_qubits):
+            qml.RY(params[i], wires=i)
+            qml.RZ(params[i], wires=i)
+            qml.RY(params[i], wires=i)
+
+        for i in range(self.n_qubits - 1):
+            qml.CRZ(params[i], wires=[self.n_qubits - 1, i])
+
+        qml.CRZ(params[i], wires=[self.n_qubits - 1, i])
 
 class ProposedVQC:
     def __init__(self, n_qubits):
