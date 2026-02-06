@@ -158,6 +158,38 @@ class QCNN:
         self._get_conv_layer_3(param5)
 
 
+class LCQHNN:
+    def __init__(self, n_qubits):
+        self.n_qubits = n_qubits
+
+    def lcqhnn_ansatz(self, params):
+        """
+        Implementação corrigida do Ansatz LCQHNN para 5 qubits.
+        params: Shape (num_layers, num_qubits) -> ex: (4, 5)
+        """
+        # CORREÇÃO DO ERRO: params.shape é uma tupla, pegamos o primeiro índice
+
+        for layer in range(self.n_qubits):
+            # 1. Entranhamento Progressivo (Cadeia CNOT 0->1, 1->2...)
+            # Baseado na Eq. 4 do artigo original do LCQHNN [2]
+            for i in range(self.n_qubits - 1):
+                qml.CNOT(wires=[i, i + 1])
+
+            # 2. Rotações RY Parametrizadas
+            # Baseado na Eq. 5 do artigo original [2]
+            for i in range(self.n_qubits):
+                qml.RY(params[i], wires=i)
+
+            # 3. Entranhamento Regressivo (Cadeia CNOT invertida)
+            # Assinatura 'Lean' para cancelamento de ruído e interferência
+            for i in range(self.n_qubits - 1, 0, -1):
+                qml.CNOT(wires=[i - 1, i])
+
+        # 4. Transformação Final do LCQHNN
+        # Aplica Hadamard no primeiro qubit para preparar a base de medição [2]
+        qml.Hadamard(wires=0)
+
+
 class ProposedVQC:
     def __init__(self, n_qubits):
         self.n_qubits = n_qubits
@@ -257,14 +289,16 @@ class QSVDDCircuit:
         mapping_fn(wires=range(self.n_qubits))
 
         # 2. Ansatz (QCNN com ruído interno nas portas)
-        ansatz = QCNN(self.n_qubits, noisy=noisy)
-        ansatz.qcnn_ansatz_without_pooling(params)
+        # ansatz = QCNN(self.n_qubits, noisy=noisy)
+        # ansatz.qcnn_ansatz_without_pooling(params)
+        ansatz = LCQHNN(self.n_qubits)
+        ansatz.lcqhnn_ansatz(params)
 
-        # 3. Readout Error (Injetado apenas se noisy=True)
-        if noisy:
-            readout_p = ansatz.noise_params["readout_error"]
-            for i in range(self.n_qubits):
-                qml.BitFlip(p=readout_p, wires=i)
+        # # 3. Readout Error (Injetado apenas se noisy=True)
+        # if noisy:
+        #     readout_p = ansatz.noise_params["readout_error"]
+        #     for i in range(self.n_qubits):
+        #         qml.BitFlip(p=readout_p, wires=i)
 
         # 4. Medição
         result = (
