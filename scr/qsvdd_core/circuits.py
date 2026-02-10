@@ -7,6 +7,7 @@ from .channel import DepolarizingChannel_2
 from qiskit import QuantumCircuit
 from qiskit.circuit.library import StatePreparation
 from qiskit import transpile
+from itertools import combinations
 
 import pennylane as qml
 import numpy as np
@@ -157,6 +158,51 @@ class QCNN:
         self._get_conv_layer_2(param4)
         self._get_conv_layer_3(param5)
 
+class QAE:
+    def __init__(self, n_qubits, noisy=False):
+        self.n_qubits = n_qubits
+
+    def _get_u_operator_qae(self, params):  # params: 14
+        nqubits = 5
+        ntrash = 3
+        for i in range(nqubits):
+            qml.RY(params[i], wires=i)
+
+        for i, j in combinations(range(0, ntrash), 2):  # CZ between trash qubits
+            qml.CZ(wires=[i, j])
+
+        for idx in range(ntrash):  # CZ between trash and non-trash qubits
+            for i in range(ntrash):
+                for j in range(ntrash + i, nqubits, ntrash):
+                    qml.CZ(wires=[(idx + i) % (ntrash), j])
+
+    def _get_u_qae_last(self, params):
+        ntrash = 3
+        for i in range(ntrash):
+            qml.RY(params[i], wires=i)
+
+    def qae_ansatz(self, params, number_params=78):
+        param1 = params[0:number_params]
+        param2 = params[number_params: 2 * number_params]
+        param3 = params[2 * number_params: 3 * number_params]
+        param4 = params[3 * number_params: 4 * number_params]
+        param5 = params[4 * number_params: 5 * number_params]
+        param6 = params[5 * number_params: 6 * number_params]
+        param7 = params[6 * number_params: 7 * number_params]
+        param8 = params[7 * number_params: 8 * number_params]
+        param9 = params[8 * number_params: 9 * number_params]
+        param10 = params[9 * number_params: 78]
+
+        self._get_u_operator_qae(param1)
+        self._get_u_operator_qae(param2)
+        self._get_u_operator_qae(param3)
+        self._get_u_operator_qae(param4)
+        self._get_u_operator_qae(param5)
+        self._get_u_operator_qae(param6)
+        self._get_u_operator_qae(param7)
+        self._get_u_operator_qae(param8)
+        self._get_u_operator_qae(param9)
+        self._get_u_qae_last(param10)
 
 class ProposedVQC:
     def __init__(self, n_qubits):
