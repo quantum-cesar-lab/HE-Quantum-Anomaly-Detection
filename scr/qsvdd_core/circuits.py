@@ -58,7 +58,6 @@ class QCNN:
         """
         Implementação do operador SU(4) com injeção automática de ruído.
         """
-
         # Bloco 1: U3 em ambos os qubits
         self._apply_gate(
             lambda: qml.U3(params[0], params[1], params[2], wires=wires[0]), [wires[0]]
@@ -145,7 +144,9 @@ class QCNN:
     def _get_conv_layer_3(self, params):
         self._get_su_4_operator(params, wires=[0, 1])
 
-    def qcnn_ansatz_without_pooling(self, params, number_params=75):  # 75
+    def ansatz(self, params):
+        number_params=75
+
         param1 = params[0:number_params]
         param2 = params[number_params : 2 * number_params]
         param3 = params[2 * number_params : 3 * number_params]
@@ -161,27 +162,48 @@ class QCNN:
 class QAE:
     def __init__(self, n_qubits, noisy=False):
         self.n_qubits = n_qubits
+        self.noisy = noisy
 
-    def _get_u_operator_qae(self, params):  # params: 14
-        nqubits = 5
+        # Parâmetros reais extraídos do FakeAlgiers
+        # Este setup equilibra um T1/T2 alto com uma porta CX mais lenta
+        self.noise_params = {
+            "p": 0.006471,  # Erro de despolarização médio
+            "t1": 156847.12,  # T1 médio (~156.8 microssegundos)
+            "t2": 188818.14,  # T2 médio (~188.8 microssegundos)
+            "gate_1q": 35.56,  # Duração da porta single-qubit (ns)
+            "gate_2q": 259.56,  # Duração da porta CX (ns)
+            "readout_error": 0.00744,  # Erro de medição (~0.7%)
+        }
+
+        # Facilitadores de acesso direto
+        self.p = self.noise_params["p"]
+        self.t1 = self.noise_params["t1"]
+        self.t2 = self.noise_params["t2"]
+        self.gate_1q = self.noise_params["gate_1q"]
+        self.gate_2q = self.noise_params["gate_2q"]
+
+    def _get_u_operator_qae(self, params, wires):  # params: 14
         ntrash = 3
-        for i in range(nqubits):
-            qml.RY(params[i], wires=i)
+        for i in range(len(wires)):
+            qml.RY(params[i], wires=wires[i])
 
         for i, j in combinations(range(0, ntrash), 2):  # CZ between trash qubits
-            qml.CZ(wires=[i, j])
+            qml.CZ(wires=[wires[i], wires[j]])
 
         for idx in range(ntrash):  # CZ between trash and non-trash qubits
             for i in range(ntrash):
-                for j in range(ntrash + i, nqubits, ntrash):
+                for j in range(ntrash + i, len(wires), ntrash):
                     qml.CZ(wires=[(idx + i) % (ntrash), j])
 
-    def _get_u_qae_last(self, params):
+    def _get_u_qae_last(self, params, wires):
         ntrash = 3
         for i in range(ntrash):
-            qml.RY(params[i], wires=i)
+            qml.RY(params[i], wires=wires[i])
 
-    def qae_ansatz(self, params, number_params=78):
+    def ansatz(self, params):
+        number_params = 78
+        wires = [0, 1, 2, 3, 4]
+
         param1 = params[0:number_params]
         param2 = params[number_params: 2 * number_params]
         param3 = params[2 * number_params: 3 * number_params]
@@ -193,22 +215,22 @@ class QAE:
         param9 = params[8 * number_params: 9 * number_params]
         param10 = params[9 * number_params: 78]
 
-        self._get_u_operator_qae(param1)
-        self._get_u_operator_qae(param2)
-        self._get_u_operator_qae(param3)
-        self._get_u_operator_qae(param4)
-        self._get_u_operator_qae(param5)
-        self._get_u_operator_qae(param6)
-        self._get_u_operator_qae(param7)
-        self._get_u_operator_qae(param8)
-        self._get_u_operator_qae(param9)
-        self._get_u_qae_last(param10)
+        self._get_u_operator_qae(param1, wires=wires)
+        self._get_u_operator_qae(param2, wires=wires)
+        self._get_u_operator_qae(param3, wires=wires)
+        self._get_u_operator_qae(param4, wires=wires)
+        self._get_u_operator_qae(param5, wires=wires)
+        self._get_u_operator_qae(param6, wires=wires)
+        self._get_u_operator_qae(param7, wires=wires)
+        self._get_u_operator_qae(param8, wires=wires)
+        self._get_u_operator_qae(param9, wires=wires)
+        self._get_u_qae_last(param10, wires=wires)
 
 class LCQHNN:
     def __init__(self, n_qubits):
         self.n_qubits = n_qubits
 
-    def lcqhnn_ansatz(self, params):
+    def ansatz(self, params):
         """
         Implementação do Ansatz LCQHNN [1] para 5 qubits.
         [1] https://arxiv.org/pdf/2412.02059
@@ -239,7 +261,7 @@ class PQC:
     def __init__(self, n_qubits):
         self.n_qubits = n_qubits
 
-    def pqc_ansatz(self, params):
+    def ansatz(self, params):
         """
         PQC of https://arxiv.org/pdf/2308.16005
         """
@@ -278,7 +300,7 @@ class ProposedVQC:
             p = param_pack[(n - 1) * 3 : n * 3]
             qml.CRot(p[0], p[1], p[2], wires=[n - 1, 0])
 
-    def proposed_ansatz(self, params):
+    def ansatz(self, params):
         n = self.n_qubits
 
         param_pack1 = params[:n]
@@ -351,11 +373,9 @@ class QSVDDCircuit:
         mapping_fn = self.feature_mapping(amplitude_array, method=method)
         mapping_fn(wires=range(self.n_qubits))
 
-        # 2. Ansatz (QCNN com ruído interno nas portas)
-        # ansatz = QCNN(self.n_qubits, noisy=noisy)
-        # ansatz.qcnn_ansatz_without_pooling(params)
-        ansatz = LCQHNN(self.n_qubits)
-        ansatz.lcqhnn_ansatz(params)
+        # 2. Escolha do VQC e aplicação do seu ansatz
+        vqc = QAE(self.n_qubits)
+        vqc.ansatz(params)
 
         # # 3. Readout Error (Injetado apenas se noisy=True)
         # if noisy:
