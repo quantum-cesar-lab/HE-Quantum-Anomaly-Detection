@@ -204,6 +204,55 @@ class QAE:
         self._get_u_operator_qae(param9)
         self._get_u_qae_last(param10)
 
+class LCQHNN:
+    def __init__(self, n_qubits):
+        self.n_qubits = n_qubits
+
+    def lcqhnn_ansatz(self, params):
+        """
+        Implementação do Ansatz LCQHNN [1] para 5 qubits.
+        [1] https://arxiv.org/pdf/2412.02059
+        """
+        # CORREÇÃO DO ERRO: params.shape é uma tupla, pegamos o primeiro índice
+
+        for layer in range(self.n_qubits):
+            # 1. Entranhamento Progressivo (Cadeia CNOT 0->1, 1->2...)
+            # Baseado na Eq. 4 do artigo original do LCQHNN [2]
+            for i in range(self.n_qubits - 1):
+                qml.CNOT(wires=[i, i + 1])
+
+            # 2. Rotações RY Parametrizadas
+            # Baseado na Eq. 5 do artigo original [2]
+            for i in range(self.n_qubits):
+                qml.RY(params[i], wires=i)
+
+            # 3. Entranhamento Regressivo (Cadeia CNOT invertida)
+            # Assinatura 'Lean' para cancelamento de ruído e interferência
+            for i in range(self.n_qubits - 1, 0, -1):
+                qml.CNOT(wires=[i - 1, i])
+
+        # 4. Transformação Final do LCQHNN
+        # Aplica Hadamard no primeiro qubit para preparar a base de medição [2]
+        qml.Hadamard(wires=0)
+
+class PQC:
+    def __init__(self, n_qubits):
+        self.n_qubits = n_qubits
+
+    def pqc_ansatz(self, params):
+        """
+        PQC of https://arxiv.org/pdf/2308.16005
+        """
+        for i in range(self.n_qubits):
+            qml.RY(params[i], wires=i)
+            qml.RZ(params[i], wires=i)
+            qml.RY(params[i], wires=i)
+
+        for i in range(self.n_qubits - 1):
+            qml.CRZ(params[i], wires=[self.n_qubits - 1, i])
+
+        qml.CRZ(params[i], wires=[self.n_qubits - 1, i])
+
 class ProposedVQC:
     def __init__(self, n_qubits):
         self.n_qubits = n_qubits
@@ -303,14 +352,16 @@ class QSVDDCircuit:
         mapping_fn(wires=range(self.n_qubits))
 
         # 2. Ansatz (QCNN com ruído interno nas portas)
-        ansatz = QCNN(self.n_qubits, noisy=noisy)
-        ansatz.qcnn_ansatz_without_pooling(params)
+        # ansatz = QCNN(self.n_qubits, noisy=noisy)
+        # ansatz.qcnn_ansatz_without_pooling(params)
+        ansatz = LCQHNN(self.n_qubits)
+        ansatz.lcqhnn_ansatz(params)
 
-        # 3. Readout Error (Injetado apenas se noisy=True)
-        if noisy:
-            readout_p = ansatz.noise_params["readout_error"]
-            for i in range(self.n_qubits):
-                qml.BitFlip(p=readout_p, wires=i)
+        # # 3. Readout Error (Injetado apenas se noisy=True)
+        # if noisy:
+        #     readout_p = ansatz.noise_params["readout_error"]
+        #     for i in range(self.n_qubits):
+        #         qml.BitFlip(p=readout_p, wires=i)
 
         # 4. Medição
         result = (
