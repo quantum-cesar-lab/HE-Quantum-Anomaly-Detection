@@ -13,7 +13,7 @@ import pennylane as qml
 import numpy as np
 
 
-class QCNN:
+class BaseAnsatz:
     def __init__(self, n_qubits, noisy=False):
         self.n_qubits = n_qubits
         self.noisy = noisy
@@ -54,11 +54,14 @@ class QCNN:
                 # O QubitChannel "embrulha" essas matrizes para o simulador
                 qml.QubitChannel(kraus_ops, wires=wires)
 
+
+class QCNNAnsatz(BaseAnsatz):
+
     def _get_su_4_operator(self, params, wires):
         """
         Implementação do operador SU(4) com injeção automática de ruído.
         """
-        # Bloco 1: U3 em ambos os qubits
+
         self._apply_gate(
             lambda: qml.U3(params[0], params[1], params[2], wires=wires[0]), [wires[0]]
         )
@@ -66,37 +69,30 @@ class QCNN:
             lambda: qml.U3(params[3], params[4], params[5], wires=wires[1]), [wires[1]]
         )
 
-        # Bloco 2: CNOT (0 -> 1)
         self._apply_gate(
             lambda: qml.CNOT(wires=[wires[0], wires[1]]),
             [wires[0], wires[1]],
             is_2q=True,
         )
 
-        # Bloco 3: Rotações intermediárias
         self._apply_gate(lambda: qml.RY(params[6], wires=wires[0]), [wires[0]])
         self._apply_gate(lambda: qml.RZ(params[7], wires=wires[1]), [wires[1]])
 
-        # Bloco 4: CNOT (1 -> 0)
         self._apply_gate(
             lambda: qml.CNOT(wires=[wires[1], wires[0]]),
             [wires[1], wires[0]],
             is_2q=True,
         )
 
-        # Bloco 5: RY e Identidade (Sincronização de ruído térmico)
         self._apply_gate(lambda: qml.RY(params[8], wires=wires[0]), [wires[0]])
-        # A identidade garante que o ruído térmico seja aplicado enquanto o qubit 0 opera
         self._apply_gate(lambda: qml.Identity(wires=wires[1]), [wires[1]])
 
-        # Bloco 6: CNOT (0 -> 1)
         self._apply_gate(
             lambda: qml.CNOT(wires=[wires[0], wires[1]]),
             [wires[0], wires[1]],
             is_2q=True,
         )
 
-        # Bloco 7: U3 finais em ambos os qubits
         self._apply_gate(
             lambda: qml.U3(params[9], params[10], params[11], wires=wires[0]),
             [wires[0]],
@@ -107,21 +103,16 @@ class QCNN:
         )
 
     def _get_conv_layer_1(self, params):
-        # Parte 1: U nos pares (0,1) e (2,3). Qubit 4 espera.
-        # O SU4 original tem várias portas. Para simplificar e manter a lógica do autor:
+
         self._get_su_4_operator(params, wires=[0, 1])
         self._get_su_4_operator(params, wires=[2, 3])
 
         if self.noisy:
-            # O autor aplicava várias identidades para somar o tempo das portas do SU4
-            # Vamos aplicar um erro térmico equivalente ao tempo total de um bloco SU4
-            # (Aprox. 4 gates de 1q + 3 gates de 2q no seu _get_su_4_operator)
             su4_total_time = (4 * self.gate_1q) + (3 * self.gate_2q)
             qml.ThermalRelaxationError(0, self.t1, self.t2, su4_total_time, wires=4)
 
         qml.Barrier(wires=range(5))
 
-        # Parte 2: U no par (4,0). Qubits 1, 2 e 3 esperam.
         self._get_su_4_operator(params, wires=[4, 0])
         if self.noisy:
             for i in [1, 2, 3]:
@@ -144,9 +135,7 @@ class QCNN:
     def _get_conv_layer_3(self, params):
         self._get_su_4_operator(params, wires=[0, 1])
 
-    def ansatz(self, params):
-        number_params=75
-
+    def build(self, params, number_params=75):  # 75
         param1 = params[0:number_params]
         param2 = params[number_params : 2 * number_params]
         param3 = params[2 * number_params : 3 * number_params]
@@ -159,165 +148,100 @@ class QCNN:
         self._get_conv_layer_2(param4)
         self._get_conv_layer_3(param5)
 
-class QAE:
-    def __init__(self, n_qubits, noisy=False):
-        self.n_qubits = n_qubits
-        self.noisy = noisy
 
-        # Parâmetros reais extraídos do FakeAlgiers
-        # Este setup equilibra um T1/T2 alto com uma porta CX mais lenta
-        self.noise_params = {
-            "p": 0.006471,  # Erro de despolarização médio
-            "t1": 156847.12,  # T1 médio (~156.8 microssegundos)
-            "t2": 188818.14,  # T2 médio (~188.8 microssegundos)
-            "gate_1q": 35.56,  # Duração da porta single-qubit (ns)
-            "gate_2q": 259.56,  # Duração da porta CX (ns)
-            "readout_error": 0.00744,  # Erro de medição (~0.7%)
-        }
+class QAEAnsatz(BaseAnsatz):
 
-        # Facilitadores de acesso direto
-        self.p = self.noise_params["p"]
-        self.t1 = self.noise_params["t1"]
-        self.t2 = self.noise_params["t2"]
-        self.gate_1q = self.noise_params["gate_1q"]
-        self.gate_2q = self.noise_params["gate_2q"]
-
-    def _get_u_operator_qae(self, params, wires):  # params: 14
+    def _get_u_operator_qae(self, params):
+        nqubits = 5
         ntrash = 3
-        for i in range(len(wires)):
-            qml.RY(params[i], wires=wires[i])
 
-        for i, j in combinations(range(0, ntrash), 2):  # CZ between trash qubits
-            qml.CZ(wires=[wires[i], wires[j]])
+        # 1. Rotações iniciais
+        for i in range(nqubits):
+            self._apply_gate(
+                lambda i=i, p=params[i]: qml.RY(p, wires=i),  # Captura i e p
+                wires=[i],
+                is_2q=False,
+            )
 
-        for idx in range(ntrash):  # CZ between trash and non-trash qubits
+        # 2. CZs entre trash qubits
+        for i, j in combinations(range(0, ntrash), 2):
+            self._apply_gate(
+                lambda i=i, j=j: qml.CZ(wires=[i, j]),  # Captura i e j
+                wires=[i, j],
+                is_2q=True,
+            )
+
+        # 3. CZs entre trash e non-trash
+        for idx in range(ntrash):
             for i in range(ntrash):
-                for j in range(ntrash + i, len(wires), ntrash):
-                    qml.CZ(wires=[(idx + i) % (ntrash), j])
+                for j in range(ntrash + i, nqubits, ntrash):
+                    w1 = (idx + i) % (ntrash)
+                    w2 = j
+                    self._apply_gate(
+                        lambda w1=w1, w2=w2: qml.CZ(wires=[w1, w2]),
+                        wires=[w1, w2],
+                        is_2q=True,
+                    )
 
-    def _get_u_qae_last(self, params, wires):
+    def _get_u_qae_last(self, params):
         ntrash = 3
         for i in range(ntrash):
-            qml.RY(params[i], wires=wires[i])
+            self._apply_gate(
+                lambda i=i, p=params[i]: qml.RY(p, wires=i),  # Captura i e p
+                wires=[i],
+                is_2q=False,
+            )
 
-    def ansatz(self, params):
-        number_params = 78
-        wires = [0, 1, 2, 3, 4]
-
+    def build(self, params, number_params=78):
         param1 = params[0:number_params]
-        param2 = params[number_params: 2 * number_params]
-        param3 = params[2 * number_params: 3 * number_params]
-        param4 = params[3 * number_params: 4 * number_params]
-        param5 = params[4 * number_params: 5 * number_params]
-        param6 = params[5 * number_params: 6 * number_params]
-        param7 = params[6 * number_params: 7 * number_params]
-        param8 = params[7 * number_params: 8 * number_params]
-        param9 = params[8 * number_params: 9 * number_params]
-        param10 = params[9 * number_params: 78]
+        param2 = params[number_params : 2 * number_params]
+        param3 = params[2 * number_params : 3 * number_params]
+        param4 = params[3 * number_params : 4 * number_params]
+        param5 = params[4 * number_params : 5 * number_params]
+        param6 = params[5 * number_params : 6 * number_params]
+        param7 = params[6 * number_params : 7 * number_params]
+        param8 = params[7 * number_params : 8 * number_params]
+        param9 = params[8 * number_params : 9 * number_params]
+        param10 = params[9 * number_params : 78]
 
-        self._get_u_operator_qae(param1, wires=wires)
-        self._get_u_operator_qae(param2, wires=wires)
-        self._get_u_operator_qae(param3, wires=wires)
-        self._get_u_operator_qae(param4, wires=wires)
-        self._get_u_operator_qae(param5, wires=wires)
-        self._get_u_operator_qae(param6, wires=wires)
-        self._get_u_operator_qae(param7, wires=wires)
-        self._get_u_operator_qae(param8, wires=wires)
-        self._get_u_operator_qae(param9, wires=wires)
-        self._get_u_qae_last(param10, wires=wires)
+        self._get_u_operator_qae(param1)
+        self._get_u_operator_qae(param2)
+        self._get_u_operator_qae(param3)
+        self._get_u_operator_qae(param4)
+        self._get_u_operator_qae(param5)
+        self._get_u_operator_qae(param6)
+        self._get_u_operator_qae(param7)
+        self._get_u_operator_qae(param8)
+        self._get_u_operator_qae(param9)
+        self._get_u_qae_last(param10)
 
-class LCQHNN:
-    def __init__(self, n_qubits):
-        self.n_qubits = n_qubits
 
-    def ansatz(self, params):
+class LCQHNNAnsatz(BaseAnsatz):
+
+    def build(self, params):
         """
         Implementação do Ansatz LCQHNN [1] para 5 qubits.
         [1] https://arxiv.org/pdf/2412.02059
         """
-        # CORREÇÃO DO ERRO: params.shape é uma tupla, pegamos o primeiro índice
 
         for layer in range(self.n_qubits):
-            # 1. Entranhamento Progressivo (Cadeia CNOT 0->1, 1->2...)
-            # Baseado na Eq. 4 do artigo original do LCQHNN [2]
+
             for i in range(self.n_qubits - 1):
-                qml.CNOT(wires=[i, i + 1])
+                self._apply_gate(
+                    lambda i=i: qml.CNOT(wires=[i, i + 1]), wires=[i, i + 1], is_2q=True
+                )
 
-            # 2. Rotações RY Parametrizadas
-            # Baseado na Eq. 5 do artigo original [2]
             for i in range(self.n_qubits):
-                qml.RY(params[i], wires=i)
+                self._apply_gate(
+                    lambda i=i, p=params[i]: qml.RY(p, wires=i), wires=[i], is_2q=False
+                )
 
-            # 3. Entranhamento Regressivo (Cadeia CNOT invertida)
-            # Assinatura 'Lean' para cancelamento de ruído e interferência
             for i in range(self.n_qubits - 1, 0, -1):
-                qml.CNOT(wires=[i - 1, i])
+                self._apply_gate(
+                    lambda i=i: qml.CNOT(wires=[i - 1, i]), wires=[i - 1, i], is_2q=True
+                )
 
-        # 4. Transformação Final do LCQHNN
-        # Aplica Hadamard no primeiro qubit para preparar a base de medição [2]
-        qml.Hadamard(wires=0)
-
-class PQC:
-    def __init__(self, n_qubits):
-        self.n_qubits = n_qubits
-
-    def ansatz(self, params):
-        """
-        PQC of https://arxiv.org/pdf/2308.16005
-        """
-        for i in range(self.n_qubits):
-            qml.RY(params[i], wires=i)
-            qml.RZ(params[i], wires=i)
-            qml.RY(params[i], wires=i)
-
-        for i in range(self.n_qubits - 1):
-            qml.CRZ(params[i], wires=[self.n_qubits - 1, i])
-
-        qml.CRZ(params[i], wires=[self.n_qubits - 1, i])
-
-class ProposedVQC:
-    def __init__(self, n_qubits):
-        self.n_qubits = n_qubits
-
-    def _get_rx_layer(self, param_pack):
-        n = self.n_qubits
-        for i in range(n):
-            qml.RX(param_pack[i], wires=i)
-
-    def _get_cyclic_ansatz_layer(self, param_pack):
-
-        n = self.n_qubits
-
-        for i in range(0, n - 1, 2):
-            p = param_pack[i * 3 : (i + 1) * 3]
-            qml.CRot(p[0], p[1], p[2], wires=[i, i + 1])
-
-        for i in range(1, n - 1, 2):
-            p = param_pack[i * 3 : (i + 1) * 3]
-            qml.CRot(p[0], p[1], p[2], wires=[i, i + 1])
-
-        if n > 1:
-            p = param_pack[(n - 1) * 3 : n * 3]
-            qml.CRot(p[0], p[1], p[2], wires=[n - 1, 0])
-
-    def ansatz(self, params):
-        n = self.n_qubits
-
-        param_pack1 = params[:n]
-        param_pack2 = params[n : 4 * n]
-        param_pack3 = params[4 * n : 5 * n]
-        param_pack4 = params[5 * n : 8 * n]
-        param_pack5 = params[8 * n :]  # 9*n parameters
-
-        self._get_rx_layer(param_pack1)
-
-        self._get_cyclic_ansatz_layer(param_pack2)
-
-        self._get_rx_layer(param_pack3)
-
-        self._get_cyclic_ansatz_layer(param_pack4)
-
-        self._get_rx_layer(param_pack5)
+        self._apply_gate(lambda: qml.Hadamard(wires=0), wires=[0], is_2q=False)
 
 
 class QSVDDCircuit:
@@ -365,28 +289,82 @@ class QSVDDCircuit:
 
         return qml.from_qiskit(transpiled_fm)
 
-    # Transforma a lógica do circuito em um QNode executável
     def qc_complete_design(
-        self, amplitude_array, params, method="pennylane", noisy=False
+        self,
+        amplitude_array,
+        params,
+        method="pennylane",
+        noisy=False,
+        ansatz_type="qcnn",
     ):
-        # 1. Feature Mapping
+
         mapping_fn = self.feature_mapping(amplitude_array, method=method)
         mapping_fn(wires=range(self.n_qubits))
 
-        # 2. Escolha do VQC e aplicação do seu ansatz
-        vqc = QAE(self.n_qubits)
-        vqc.ansatz(params)
+        ansatz_classes = {
+            "qcnn": QCNNAnsatz,
+            "lcqhnn": LCQHNNAnsatz,
+            "qae": QAEAnsatz,
+        }
 
-        # # 3. Readout Error (Injetado apenas se noisy=True)
-        # if noisy:
-        #     readout_p = ansatz.noise_params["readout_error"]
-        #     for i in range(self.n_qubits):
-        #         qml.BitFlip(p=readout_p, wires=i)
+        if ansatz_type not in ansatz_classes:
+            raise ValueError(f"Ansatz '{ansatz_type}' não reconhecido.")
 
-        # 4. Medição
+        ansatz_obj = ansatz_classes[ansatz_type](self.n_qubits, noisy=noisy)
+        ansatz_obj.build(params)
+
+        if noisy and hasattr(ansatz_obj, "noise_params"):
+            readout_p = ansatz_obj.noise_params["readout_error"]
+            for i in range(self.n_qubits):
+                qml.BitFlip(p=readout_p, wires=i)
+
         result = (
             qml.expval(qml.PauliX(0) @ qml.PauliX(2)),
             qml.expval(qml.PauliY(0) @ qml.PauliY(2)),
             qml.expval(qml.PauliZ(0) @ qml.PauliZ(2)),
         )
         return result
+
+    # class ProposedVQC:
+    #     def __init__(self, n_qubits):
+    #         self.n_qubits = n_qubits
+    #
+    #     def _get_rx_layer(self, param_pack):
+    #         n = self.n_qubits
+    #         for i in range(n):
+    #             qml.RX(param_pack[i], wires=i)
+    #
+    #     def _get_cyclic_ansatz_layer(self, param_pack):
+    #
+    #         n = self.n_qubits
+    #
+    #         for i in range(0, n - 1, 2):
+    #             p = param_pack[i * 3 : (i + 1) * 3]
+    #             qml.CRot(p[0], p[1], p[2], wires=[i, i + 1])
+    #
+    #         for i in range(1, n - 1, 2):
+    #             p = param_pack[i * 3 : (i + 1) * 3]
+    #             qml.CRot(p[0], p[1], p[2], wires=[i, i + 1])
+    #
+    #         if n > 1:
+    #             p = param_pack[(n - 1) * 3 : n * 3]
+    #             qml.CRot(p[0], p[1], p[2], wires=[n - 1, 0])
+    #
+    #     def build(self, params):
+    #         n = self.n_qubits
+    #
+    #         param_pack1 = params[:n]
+    #         param_pack2 = params[n : 4 * n]
+    #         param_pack3 = params[4 * n : 5 * n]
+    #         param_pack4 = params[5 * n : 8 * n]
+    #         param_pack5 = params[8 * n :]  # 9*n parameters
+    #
+    #         self._get_rx_layer(param_pack1)
+    #
+    #         self._get_cyclic_ansatz_layer(param_pack2)
+    #
+    #         self._get_rx_layer(param_pack3)
+    #
+    #         self._get_cyclic_ansatz_layer(param_pack4)
+    #
+    #         self._get_rx_layer(param_pack5)

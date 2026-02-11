@@ -1,6 +1,7 @@
 import pennylane.math as np
 from pennylane.operation import Channel
 
+
 class DepolarizingChannel_2(Channel):
     num_params = 1
     num_wires = 2
@@ -23,15 +24,14 @@ class DepolarizingChannel_2(Channel):
         Y = np.convert_like(np.array([[0, -1j], [1j, 0]], dtype=complex), p)
         Z = np.convert_like(np.array([[1, 0], [0, -1]], dtype=complex), p)
 
-        paulis = [I, X, Y ,Z]
+        paulis = [I, X, Y, Z]
         K = []
         for i in range(len(paulis)):
             for j in range(len(paulis)):
-                #K.append((probs[i * len(paulis) + j] + np.eps) * np.kron(paulis[i], paulis[j]))
+                # K.append((probs[i * len(paulis) + j] + np.eps) * np.kron(paulis[i], paulis[j]))
                 if i == 0 and j == 0:
                     K.append(np.sqrt(1 - p + np.eps) * np.kron(paulis[i], paulis[j]))
-                else :
+                else:
                     K.append(np.sqrt(p / 15 + np.eps) * np.kron(paulis[i], paulis[j]))
 
         return K
-
