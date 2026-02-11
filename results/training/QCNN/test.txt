@@ -1,1 +1,0 @@
-só criei esse arquivo pra ter ctz que meu commit ia subir a pasta criada já que o np.savetxt não faz essa boa. pode excluir assim que começar a testar
