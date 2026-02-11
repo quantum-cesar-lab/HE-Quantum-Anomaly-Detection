@@ -9,7 +9,7 @@ def circuit_training(
     engine = QuantumEngine(n_qubits=5, noisy=noisy, ansatz_type=ansatz)
 
     params_map = {
-        'qcnn': 75,
+        'qcnn': 375,
         'lcqhnn': 5,
         'qae': 48
     }

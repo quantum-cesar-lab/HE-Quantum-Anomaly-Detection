@@ -193,27 +193,23 @@ class QAEAnsatz(BaseAnsatz):
             )
 
     def build(self, params, number_params=78):
-        param1 = params[0:number_params]
-        param2 = params[number_params : 2 * number_params]
-        param3 = params[2 * number_params : 3 * number_params]
-        param4 = params[3 * number_params : 4 * number_params]
-        param5 = params[4 * number_params : 5 * number_params]
-        param6 = params[5 * number_params : 6 * number_params]
-        param7 = params[6 * number_params : 7 * number_params]
-        param8 = params[7 * number_params : 8 * number_params]
-        param9 = params[8 * number_params : 9 * number_params]
-        param10 = params[9 * number_params : 78]
+        """
+        Build dinâmico para o QAE.
+        Total de parâmetros necessários: (9 blocos * 5) + 3 = 48.
+        """
+        n_blocos = 9
+        params_per_block = 5
 
-        self._get_u_operator_qae(param1)
-        self._get_u_operator_qae(param2)
-        self._get_u_operator_qae(param3)
-        self._get_u_operator_qae(param4)
-        self._get_u_operator_qae(param5)
-        self._get_u_operator_qae(param6)
-        self._get_u_operator_qae(param7)
-        self._get_u_operator_qae(param8)
-        self._get_u_operator_qae(param9)
-        self._get_u_qae_last(param10)
+        # 1. Aplica os 9 blocos de codificação
+        for i in range(n_blocos):
+            start = i * params_per_block
+            end = start + params_per_block
+            # Passa apenas o pedaço de 5 parâmetros para cada bloco
+            self._get_u_operator_qae(params[start:end])
+
+        # 2. Aplica o bloco final (usando os parâmetros a partir do índice 45)
+        # params[45:48] pegará os 3 últimos valores se o total for 48
+        self._get_u_qae_last(params[45:48])
 
 
 class LCQHNNAnsatz(BaseAnsatz):
