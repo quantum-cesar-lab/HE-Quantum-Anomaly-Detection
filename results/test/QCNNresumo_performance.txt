@@ -1,0 +1,9 @@
+Relatório de Performance - Ansatz: QCNN
+Melhor Configuracao: B04S2000
+AUC Maximo: 0.9632
+------------------------------
+B04S2000: AUC = 0.9632
+B08S1000: AUC = 0.9412
+B16S500: AUC = 0.9412
+B32S250: AUC = 0.9241
+B64S125: AUC = 0.8998

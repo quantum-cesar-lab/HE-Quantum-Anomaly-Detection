@@ -1,5 +1,0 @@
-Test completed.
-Batch Size = 16 
-Steps = 500 
-Training time: 21.54 minutes
-AUC: 0.9447
