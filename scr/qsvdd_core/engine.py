@@ -4,9 +4,10 @@ from pennylane import numpy as np
 
 
 class QuantumEngine:
-    def __init__(self, n_qubits, noisy=False):
+    def __init__(self, n_qubits, noisy=False, ansatz_type="qcnn"):
         self.n_qubits = n_qubits
-        self.noisy = noisy  # Define se o motor rodará com ruído
+        self.noisy = noisy
+        self.ansatz_type = ansatz_type
 
         # Seleção dinâmica do dispositivo
         if self.noisy:
@@ -21,7 +22,9 @@ class QuantumEngine:
 
     def _circuit_definition(self, x, params):
         """Esta é a função interna que define as portas quânticas."""
-        return self.circuit_logic.qc_complete_design(x, params, noisy=self.noisy)
+        return self.circuit_logic.qc_complete_design(
+            x, params, noisy=self.noisy, ansatz_type=self.ansatz_type
+        )
 
     def cost(self, params, X, Y):
         # np.stack do PennyLane preserva a diferenciabilidade

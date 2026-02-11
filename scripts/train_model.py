@@ -4,9 +4,16 @@ import pennylane as qml
 
 
 def circuit_training(
-    X_train, Y_train, n_params, batch_size, learning_rate, steps, noisy=False
+    X_train, Y_train, batch_size, learning_rate, steps, noisy=False, ansatz='qcnn'
 ):
-    engine = QuantumEngine(n_qubits=5, noisy=noisy)
+    engine = QuantumEngine(n_qubits=5, noisy=noisy, ansatz_type=ansatz)
+
+    params_map = {
+        'qcnn': 75,
+        'lcqhnn': 5,
+        'qae': 48
+    }
+    n_params = params_map[ansatz]
 
     np.random.seed(42)
     params = np.random.randn(n_params, requires_grad=True)
