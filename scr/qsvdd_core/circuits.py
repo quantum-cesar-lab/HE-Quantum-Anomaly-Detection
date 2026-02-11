@@ -295,7 +295,7 @@ class QSVDDCircuit:
         params,
         method="pennylane",
         noisy=False,
-        ansatz_type="qcnn",
+        ansatz_type="lcqhnn",
     ):
 
         mapping_fn = self.feature_mapping(amplitude_array, method=method)
