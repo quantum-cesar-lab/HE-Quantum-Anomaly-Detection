@@ -19,7 +19,7 @@ class BaseAnsatz:
         self.noisy = noisy
 
         # Parâmetros reais extraídos do FakeAlgiers
-        # Este setup equilibra um T1/T2 alto com uma porta CX mais lenta
+        # Este setup equilibra um T1/T2 alto com uma porta CX mais lenta em relaçao ao torino
         self.noise_params = {
             "p": 0.006471,  # Erro de despolarização médio
             "t1": 156847.12,  # T1 médio (~156.8 microssegundos)
