@@ -4,10 +4,11 @@ from pennylane import numpy as np
 
 
 class QuantumEngine:
-    def __init__(self, n_qubits, noisy=False, ansatz_type="qcnn"):
+    def __init__(self, n_qubits, noisy=False, fm='pennylane', ansatz_type="qcnn"):
         self.n_qubits = n_qubits
         self.noisy = noisy
         self.ansatz_type = ansatz_type
+        self.fm = fm
 
         # Seleção dinâmica do dispositivo
         if self.noisy:
@@ -23,7 +24,7 @@ class QuantumEngine:
     def _circuit_definition(self, x, params):
         """Esta é a função interna que define as portas quânticas."""
         return self.circuit_logic.qc_complete_design(
-            x, params, noisy=self.noisy, ansatz_type=self.ansatz_type
+            x, params, f_method=self.fm, noisy=self.noisy, ansatz_type=self.ansatz_type
         )
 
     def cost(self, params, X, Y):

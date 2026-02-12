@@ -257,6 +257,10 @@ class QSVDDCircuit:
         """
         Initializes quantum state using various state preparation methods.
         """
+        if hasattr(amplitude_array, "numpy"):
+            amplitude_array = amplitude_array.numpy()
+        else:
+            amplitude_array = np.array(amplitude_array, dtype=float)
 
         if method == "pennylane":
             return lambda wires: qml.AmplitudeEmbedding(
@@ -289,12 +293,12 @@ class QSVDDCircuit:
         self,
         amplitude_array,
         params,
-        method="pennylane",
+        f_method="pennylane",
         noisy=False,
         ansatz_type="lcqhnn",
     ):
 
-        mapping_fn = self.feature_mapping(amplitude_array, method=method)
+        mapping_fn = self.feature_mapping(amplitude_array, method=f_method)
         mapping_fn(wires=range(self.n_qubits))
 
         ansatz_classes = {
