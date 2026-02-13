@@ -46,15 +46,14 @@ def test(
     return auc, y_pred_local, y_true_local, fpr, tpr
 
 
-def mean_auc(params_list, **kwargs):
+def mean_auc(params_list, n_train, X_test, Y_test, center_train, noisy=False, ansatz="qcnn"):
     """
         Calcula a média e o desvio padrão do AUC repetindo o teste 5 vezes.
         O operador **kwargs captura todos os arrays e bools automaticamente.
     """
     auc_list = []
-    test_args = kwargs.copy()
     for i in range(5):
-        test_args['trained_params'] = params_list[i]
-        auc, _, _, _, _ = test(**test_args)
+        trained_params = params_list[i]
+        auc, _, _, _, _ = test(n_train, X_test, Y_test, trained_params, center_train, noisy, ansatz)
         auc_list.append(auc)
     return np.mean(auc_list), np.std(auc_list)
