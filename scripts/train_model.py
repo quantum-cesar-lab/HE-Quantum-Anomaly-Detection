@@ -90,7 +90,7 @@ def circuit_training2(
             except Exception as e:
                 attempts += 1
                 print(
-                    f"⚠️ Iteração {it}: Falha numérica (Tentativa {attempts}/{max_attempts}). Erro: {e}"
+                    f"Iteração {it}: Falha numérica (Tentativa {attempts}/{max_attempts}). Erro: {e}"
                 )
 
         if success:
@@ -100,7 +100,7 @@ def circuit_training2(
             it += 1
         else:
             print(
-                f"❌ Erro crítico: Não foi possível encontrar um batch estável para a iteração {it}."
+                f"Erro crítico: Não foi possível encontrar um batch estável para a iteração {it}."
             )
             break
 
@@ -109,10 +109,12 @@ def circuit_training2(
 
 def train_five_times(**kwargs):
     params_list = []
+    rng = np.random.default_rng()
     for i in range(5):
         current_args = kwargs.copy()
-        current_args['seed'] = i
-        print(f"--- Starting training round {i + 1} with seed {i} ---")
+        seed = rng.integers(low=0, high=2**32)
+        current_args['seed'] = seed
+        print(f"--- Starting training round {i + 1} with seed {seed} ---")
         _, trained_params, _ = circuit_training(**current_args)
         params_list.append(trained_params)
 
