@@ -4,7 +4,9 @@ from sklearn.metrics import roc_curve, roc_auc_score
 from scr.qsvdd_core.engine import QuantumEngine
 
 
-def test(n_train, X_test, Y_test, trained_params, center_train, noisy=False, ansatz='qcnn'):
+def test(
+    n_train, X_test, Y_test, trained_params, center_train, noisy=False, ansatz="qcnn"
+):
     start_time = time.time()
 
     y_true_local = []
@@ -42,3 +44,17 @@ def test(n_train, X_test, Y_test, trained_params, center_train, noisy=False, ans
     print(f"Test completed in {total_time:.2f}s | AUC: {auc:.4f}")
 
     return auc, y_pred_local, y_true_local, fpr, tpr
+
+
+def mean_auc(params_list, **kwargs):
+    """
+        Calcula a média e o desvio padrão do AUC repetindo o teste 5 vezes.
+        O operador **kwargs captura todos os arrays e bools automaticamente.
+    """
+    auc_list = []
+    test_args = kwargs.copy()
+    for i in range(5):
+        test_args['trained_params'] = params_list[i]
+        auc, _, _, _, _ = test(**test_args)
+        auc_list.append(auc)
+    return np.mean(auc_list), np.std(auc_list)

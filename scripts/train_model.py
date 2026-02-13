@@ -4,18 +4,21 @@ import pennylane as qml
 
 
 def circuit_training(
-    X_train, Y_train, batch_size, learning_rate, steps, noisy=False, ansatz='qcnn'
+    X_train,
+    Y_train,
+    batch_size,
+    learning_rate,
+    steps,
+    noisy=False,
+    ansatz="qcnn",
+    seed=42,
 ):
     engine = QuantumEngine(n_qubits=5, noisy=noisy, ansatz_type=ansatz)
 
-    params_map = {
-        'qcnn': 375,
-        'lcqhnn': 5,
-        'qae': 48
-    }
+    params_map = {"qcnn": 375, "lcqhnn": 5, "qae": 48}
     n_params = params_map[ansatz]
 
-    np.random.seed(42)
+    np.random.seed(seed)
     params = np.random.randn(n_params, requires_grad=True)
     opt = qml.AdamOptimizer(stepsize=learning_rate)
 
@@ -42,15 +45,18 @@ def circuit_training(
 
 
 def circuit_training2(
-        X_train, Y_train, batch_size, learning_rate, steps, noisy=False, fm='pennylane', ansatz='qcnn'
+    X_train,
+    Y_train,
+    batch_size,
+    learning_rate,
+    steps,
+    noisy=False,
+    fm="pennylane",
+    ansatz="qcnn",
 ):
-    engine = QuantumEngine(n_qubits=5, noisy=noisy,fm=fm ,ansatz_type=ansatz)
+    engine = QuantumEngine(n_qubits=5, noisy=noisy, fm=fm, ansatz_type=ansatz)
 
-    params_map = {
-        'qcnn': 375,
-        'lcqhnn': 5,
-        'qae': 48
-    }
+    params_map = {"qcnn": 375, "lcqhnn": 5, "qae": 48}
     n_params = params_map[ansatz]
 
     np.random.seed(42)
@@ -64,7 +70,9 @@ def circuit_training2(
     while it < steps:
         success = False
         attempts = 0
-        max_attempts = 10  # Aumentamos para garantir resiliência contra divergências numéricas
+        max_attempts = (
+            10  # Aumentamos para garantir resiliência contra divergências numéricas
+        )
 
         while not success and attempts < max_attempts:
             try:
@@ -81,7 +89,9 @@ def circuit_training2(
 
             except Exception as e:
                 attempts += 1
-                print(f"⚠️ Iteração {it}: Falha numérica (Tentativa {attempts}/{max_attempts}). Erro: {e}")
+                print(
+                    f"⚠️ Iteração {it}: Falha numérica (Tentativa {attempts}/{max_attempts}). Erro: {e}"
+                )
 
         if success:
             param_history.append(params)
@@ -89,7 +99,21 @@ def circuit_training2(
             print(f"iteration: {it} | cost: {cost_new:.6f}")
             it += 1
         else:
-            print(f"❌ Erro crítico: Não foi possível encontrar um batch estável para a iteração {it}.")
+            print(
+                f"❌ Erro crítico: Não foi possível encontrar um batch estável para a iteração {it}."
+            )
             break
 
     return loss_history, params, param_history
+
+
+def train_five_times(**kwargs):
+    params_list = []
+    for i in range(5):
+        current_args = kwargs.copy()
+        current_args['seed'] = i
+        print(f"--- Starting training round {i + 1} with seed {i} ---")
+        _, trained_params, _ = circuit_training(**current_args)
+        params_list.append(trained_params)
+
+    return params_list

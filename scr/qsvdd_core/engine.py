@@ -4,7 +4,7 @@ from pennylane import numpy as np
 
 
 class QuantumEngine:
-    def __init__(self, n_qubits, noisy=False, fm='pennylane', ansatz_type="qcnn"):
+    def __init__(self, n_qubits, noisy=False, fm="pennylane", ansatz_type="qcnn"):
         self.n_qubits = n_qubits
         self.noisy = noisy
         self.ansatz_type = ansatz_type
