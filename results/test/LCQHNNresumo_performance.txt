@@ -1,0 +1,9 @@
+Relatório de Performance - Ansatz: LCQHNN
+Melhor Configuracao: B32S250
+AUC Maximo: 0.9074
+------------------------------
+B04S2000: AUC = 0.7626
+B08S1000: AUC = 0.7618
+B16S500: AUC = 0.9035
+B32S250: AUC = 0.9074
+B64S125: AUC = 0.7722

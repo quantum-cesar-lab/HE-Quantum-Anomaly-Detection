@@ -3,7 +3,6 @@ venv/
 .env
 env/
 .venv/
-.venv
 
 # Python (Arquivos compilados e cache)
 __pycache__/
@@ -14,7 +13,6 @@ __pycache__/
 # Dados e Datasets (Importante!)
 data/
 *.csv
-*.npy
 *.npz
 *.json
 
