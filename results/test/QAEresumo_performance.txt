@@ -1,4 +1,4 @@
-Relatório de Performance - Ansatz: QAE
+RelatÃ³rio de Performance - Ansatz: QAE
 Melhor Configuracao: B04S2000
 AUC Maximo: 0.9280000000000002
 ------------------------------

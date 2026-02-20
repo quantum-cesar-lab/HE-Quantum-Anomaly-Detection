@@ -1,4 +1,4 @@
-Relatório de Performance - Ansatz: LCQHNN
+RelatÃ³rio de Performance - Ansatz: LCQHNN
 Melhor Configuracao: B32S250
 AUC Maximo: 0.9074
 ------------------------------
