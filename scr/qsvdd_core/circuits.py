@@ -267,6 +267,12 @@ class QSVDDCircuit:
                 amplitude_array, wires=wires, pad_with=0.0, normalize=True
             )
 
+        if method == "angle_embedding":
+            return lambda wires: qml.AngleEmbedding(
+                amplitude_array, wires=wires, rotation="X"
+            )
+
+
         norm = np.linalg.norm(amplitude_array)
         if norm > 0:
             amplitude_array = amplitude_array / norm
