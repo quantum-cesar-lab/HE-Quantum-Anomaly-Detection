@@ -12,8 +12,9 @@ def circuit_training(
     noisy=False,
     ansatz="qcnn",
     seed=42,
+    fm="pennylane"
 ):
-    engine = QuantumEngine(n_qubits=5, noisy=noisy, ansatz_type=ansatz)
+    engine = QuantumEngine(n_qubits=5, noisy=noisy, fm=fm, ansatz_type=ansatz)
 
     params_map = {"qcnn": 375, "lcqhnn": 5, "qae": 48}
     n_params = params_map[ansatz]
