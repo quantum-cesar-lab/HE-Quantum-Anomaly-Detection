@@ -220,7 +220,7 @@ class LCQHNNAnsatz(BaseAnsatz):
         [1] https://arxiv.org/pdf/2412.02059
         """
 
-        for layer in range(self.n_qubits):
+        for layer in range(1): # self.n_qubits
 
             for i in range(self.n_qubits - 1):
                 self._apply_gate(
@@ -324,11 +324,16 @@ class QSVDDCircuit:
             for i in range(self.n_qubits):
                 qml.BitFlip(p=readout_p, wires=i)
 
-        result = (
-            qml.expval(qml.PauliX(0) @ qml.PauliX(2)),
-            qml.expval(qml.PauliY(0) @ qml.PauliY(2)),
-            qml.expval(qml.PauliZ(0) @ qml.PauliZ(2)),
-        )
+        if ansatz_type == "lcqhnn":
+            # Como o Hadamard já está no Ansatz, medimos todos em Pauli-Z
+            result = tuple(qml.expval(qml.PauliZ(i)) for i in range(self.n_qubits))
+        else:
+            # Padrão original para os outros métodos
+            result = (
+                qml.expval(qml.PauliX(0) @ qml.PauliX(2)),
+                qml.expval(qml.PauliY(0) @ qml.PauliY(2)),
+                qml.expval(qml.PauliZ(0) @ qml.PauliZ(2)),
+            )
         return result
 
     # class ProposedVQC:
