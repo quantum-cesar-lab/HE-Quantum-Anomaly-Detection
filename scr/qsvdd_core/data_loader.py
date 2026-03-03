@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class QuantumDataLoader:
     def __init__(self):
-        self.n_qubits = 5  # Definido para 32 amplitudes (2^5)
+        self.n_qubits = 5  # Defined for 32 amplitudes (2^5)
         self.target_dim = 2**self.n_qubits
         self.scaler = MinMaxScaler()
 
@@ -17,9 +17,6 @@ class QuantumDataLoader:
         self.angle_map_scaler = MinMaxScaler(feature_range=(0, np.pi))
 
     def prepare_fraud_data(self, df):
-        """
-        Processa o dataset de fraude específico do arquivo carregado.
-        """
 
         X = df.drop("Class", axis=1).values
         y = df["Class"].values
@@ -33,7 +30,7 @@ class QuantumDataLoader:
         )
 
         norms = np.linalg.norm(X_padded, axis=1, keepdims=True)
-        # Evita divisão por zero
+        # Avoids division by zero
         norms[norms == 0] = 1.0
         X_quantum = X_padded / norms
 
