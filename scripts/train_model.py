@@ -12,7 +12,7 @@ def circuit_training(
     noisy=False,
     ansatz="qcnn",
     seed=42,
-    fm="pennylane"
+    fm="pennylane",
 ):
     engine = QuantumEngine(n_qubits=5, noisy=noisy, fm=fm, ansatz_type=ansatz)
 
@@ -114,7 +114,7 @@ def train_five_times(**kwargs):
     for i in range(5):
         current_args = kwargs.copy()
         seed = rng.integers(low=0, high=2**32)
-        current_args['seed'] = seed
+        current_args["seed"] = seed
         print(f"--- Starting training round {i + 1} with seed {seed} ---")
         _, trained_params, _ = circuit_training(**current_args)
         params_list.append(trained_params)

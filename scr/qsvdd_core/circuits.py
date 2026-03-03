@@ -214,7 +214,7 @@ class LCQHNNAnsatz(BaseAnsatz):
         [1] https://arxiv.org/pdf/2412.02059
         """
 
-        for layer in range(1): # self.n_qubits
+        for layer in range(1):  # self.n_qubits
 
             for i in range(self.n_qubits - 1):
                 self._apply_gate(
@@ -265,7 +265,6 @@ class QSVDDCircuit:
             return lambda wires: qml.AngleEmbedding(
                 amplitude_array, wires=wires, rotation="X"
             )
-
 
         norm = np.linalg.norm(amplitude_array)
         if norm > 0:

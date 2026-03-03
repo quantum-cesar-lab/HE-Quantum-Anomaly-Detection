@@ -44,8 +44,8 @@ class QuantumDataLoader:
         # Fluxo: Padronizar -> PCA -> Mapear para [0, pi]
         X_std = self.std_scaler.fit_transform(X)
         X_pca = self.pca.fit_transform(X_std)
-        print('Explained Variance Ratio: ', self.pca.explained_variance_ratio_)
-        print('Singular Values: ', self.pca.singular_values_)
+        print("Explained Variance Ratio: ", self.pca.explained_variance_ratio_)
+        print("Singular Values: ", self.pca.singular_values_)
         X_angles = self.angle_map_scaler.fit_transform(X_pca)
 
         return X_angles, y
@@ -58,14 +58,22 @@ class QuantumDataLoader:
         df_scaled = pd.DataFrame(df_features_std, columns=df_features.columns)
 
         sns.set(font_scale=scale)
-        plt.figure(figsize=(15*scale, 12*scale))
+        plt.figure(figsize=(15 * scale, 12 * scale))
         corr = df_scaled.corr()
 
         # Usando uma máscara para mostrar apenas a parte de baixo do triângulo (opcional, mas fica mais limpo)
         mask = np.triu(np.ones_like(corr, dtype=bool))
 
-        sns.heatmap(corr, mask=mask, annot=False, cmap='coolwarm', center=0,
-                    square=True, linewidths=.5, cbar_kws={"shrink": .8})
+        sns.heatmap(
+            corr,
+            mask=mask,
+            annot=False,
+            cmap="coolwarm",
+            center=0,
+            square=True,
+            linewidths=0.5,
+            cbar_kws={"shrink": 0.8},
+        )
 
         plt.title("Matriz de Correlação das Features (Sem o Rótulo)")
         plt.show()
@@ -81,18 +89,30 @@ class QuantumDataLoader:
         cumulative_variance = np.cumsum(pca_full.explained_variance_ratio_)
 
         plt.figure(figsize=(10, 6))
-        plt.plot(range(1, len(cumulative_variance) + 1), cumulative_variance,
-                 marker='o', linestyle='--', color='b')
+        plt.plot(
+            range(1, len(cumulative_variance) + 1),
+            cumulative_variance,
+            marker="o",
+            linestyle="--",
+            color="b",
+        )
 
         # Destaca o ponto atual de 5 qubits
-        plt.axvline(x=self.n_qubits, color='r', linestyle=':', label=f'Atual: {self.n_qubits} Qubits')
-        plt.axhline(y=cumulative_variance[self.n_qubits - 1], color='r', linestyle=':')
+        plt.axvline(
+            x=self.n_qubits,
+            color="r",
+            linestyle=":",
+            label=f"Atual: {self.n_qubits} Qubits",
+        )
+        plt.axhline(y=cumulative_variance[self.n_qubits - 1], color="r", linestyle=":")
 
-        plt.xlabel('Número de Componentes Principais (Qubits)')
-        plt.ylabel('Variância Explicada Acumulada')
-        plt.title('Análise de Dimensionalidade para o QSVDD')
+        plt.xlabel("Número de Componentes Principais (Qubits)")
+        plt.ylabel("Variância Explicada Acumulada")
+        plt.title("Análise de Dimensionalidade para o QSVDD")
         plt.grid(True, alpha=0.3)
         plt.legend()
         plt.show()
 
-        print(f"Variância com {self.n_qubits} qubits: {cumulative_variance[self.n_qubits - 1]:.2%}")
+        print(
+            f"Variância com {self.n_qubits} qubits: {cumulative_variance[self.n_qubits - 1]:.2%}"
+        )
