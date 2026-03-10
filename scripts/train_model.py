@@ -1,6 +1,6 @@
+import time
 from pennylane import numpy as np
 
-# from notebooks.original_qcnn_experiments.qcnn_angle_embedding_exploration import loss_history
 from scr.qsvdd_core.engine import QuantumEngine
 import pennylane as qml
 
@@ -111,15 +111,21 @@ def circuit_training2(
 
 
 def train_five_times(**kwargs):
-    params_list = []
-    loss_history = []
+    est_params_list = []
+    loss_history_list = []
+    param_history_list = []
+    time_record = []
     rng = np.random.default_rng()
     for i in range(5):
         current_args = kwargs.copy()
         seed = rng.integers(low=0, high=2**32)
         current_args["seed"] = seed
         print(f"--- Starting training round {i + 1} with seed {seed} ---")
-        loss, trained_params, _ = circuit_training(**current_args)
-        params_list.append(trained_params)
-        loss_history.append(loss)
-    return loss_history, params_list
+        time_start = time.time()
+        loss_history, trained_params, param_history = circuit_training(**current_args)
+        time_record.append(time.time() - time_start)
+        est_params_list.append(trained_params)
+        loss_history_list.append(loss_history)
+        param_history_list.append(param_history)
+
+    return loss_history_list, est_params_list, param_history_list, time_record
