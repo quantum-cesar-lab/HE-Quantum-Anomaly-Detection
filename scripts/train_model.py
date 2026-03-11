@@ -42,7 +42,7 @@ def circuit_training(
         param_history.append(params)
         loss_history.append(cost_new)
 
-        print(f"iteration: {it} | cost: {cost_new:.6f}")
+        #print(f"iteration: {it} | cost: {cost_new:.6f}")
 
     return loss_history, params, param_history
 
