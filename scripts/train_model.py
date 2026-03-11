@@ -93,17 +93,17 @@ def circuit_training2(
             except Exception as e:
                 attempts += 1
                 print(
-                    f"Iteração {it}: Falha numérica (Tentativa {attempts}/{max_attempts}). Erro: {e}"
+                    f"Iteration {it}: (Attempt {attempts}/{max_attempts}). Error: {e}"
                 )
 
         if success:
             param_history.append(params)
             loss_history.append(cost_new)
-            print(f"iteration: {it} | cost: {cost_new:.6f}")
+            #print(f"iteration: {it} | cost: {cost_new:.6f}")
             it += 1
         else:
             print(
-                f"Erro crítico: Não foi possível encontrar um batch estável para a iteração {it}."
+                f"Critical Error: Unable to find a stable batch for iteration: {it}."
             )
             break
 
@@ -114,7 +114,7 @@ def train_five_times(**kwargs):
     est_params_list = []
     loss_history_list = []
     param_history_list = []
-    time_record = []
+    time_records = []
     rng = np.random.default_rng()
     for i in range(5):
         current_args = kwargs.copy()
@@ -123,9 +123,9 @@ def train_five_times(**kwargs):
         print(f"--- Starting training round {i + 1} with seed {seed} ---")
         time_start = time.time()
         loss_history, trained_params, param_history = circuit_training(**current_args)
-        time_record.append(time.time() - time_start)
+        time_records.append(time.time() - time_start)
         est_params_list.append(trained_params)
         loss_history_list.append(loss_history)
         param_history_list.append(param_history)
 
-    return loss_history_list, est_params_list, param_history_list, time_record
+    return loss_history_list, est_params_list, param_history_list, time_records
