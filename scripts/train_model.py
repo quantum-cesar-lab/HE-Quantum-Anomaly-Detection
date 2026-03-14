@@ -74,12 +74,11 @@ def circuit_training2(
         success = False
         attempts = 0
         max_attempts = (
-            10  # Aumentamos para garantir resiliência contra divergências numéricas
+            10
         )
 
         while not success and attempts < max_attempts:
             try:
-                # 1. Seleção do batch
                 batch_index = np.random.randint(0, len(X_train), (batch_size,))
                 X_batch = np.array(X_train[batch_index], requires_grad=False)
                 Y_batch = np.array(Y_train[batch_index], requires_grad=False)
@@ -88,7 +87,7 @@ def circuit_training2(
                     lambda v: engine.cost(v, X_batch, Y_batch), params
                 )
 
-                success = True  # Otimização bem-sucedida
+                success = True
 
             except Exception as e:
                 attempts += 1
