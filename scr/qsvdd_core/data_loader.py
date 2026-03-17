@@ -41,7 +41,6 @@ class QuantumDataLoader:
         X = df.drop("Class", axis=1).values
         y = df["Class"].values
 
-        # Fluxo: Padronizar -> PCA -> Mapear para [0, pi]
         X_std = self.std_scaler.fit_transform(X)
         X_pca = self.pca.fit_transform(X_std)
         print("Explained Variance Ratio: ", self.pca.explained_variance_ratio_)
@@ -52,7 +51,6 @@ class QuantumDataLoader:
 
     def plot_correlation_matrix(self, df, scale=0.7):
         """Mostra a correlação apenas entre as features (X)"""
-        # Dropar a coluna de rótulo para focar apenas nas características
         df_features = df.drop("Class", axis=1)
         df_features_std = self.std_scaler.fit_transform(df_features)
         df_scaled = pd.DataFrame(df_features_std, columns=df_features.columns)
@@ -61,7 +59,6 @@ class QuantumDataLoader:
         plt.figure(figsize=(15 * scale, 12 * scale))
         corr = df_scaled.corr()
 
-        # Usando uma máscara para mostrar apenas a parte de baixo do triângulo (opcional, mas fica mais limpo)
         mask = np.triu(np.ones_like(corr, dtype=bool))
 
         sns.heatmap(
@@ -83,7 +80,6 @@ class QuantumDataLoader:
         X = df.drop("Class", axis=1).values
         X_std = self.std_scaler.fit_transform(X)
 
-        # Calculamos o PCA para todas as componentes possíveis (30)
         pca_full = PCA().fit(X_std)
 
         cumulative_variance = np.cumsum(pca_full.explained_variance_ratio_)
@@ -97,7 +93,6 @@ class QuantumDataLoader:
             color="b",
         )
 
-        # Destaca o ponto atual de 5 qubits
         plt.axvline(
             x=self.n_qubits,
             color="r",

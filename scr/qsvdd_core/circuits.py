@@ -28,7 +28,6 @@ class BaseAnsatz:
             "readout_error": 0.00744,  # Measurement error (~0.7%)
         }
 
-        # Facilitadores de acesso direto
         self.p = self.noise_params["p"]
         self.t1 = self.noise_params["t1"]
         self.t2 = self.noise_params["t2"]
@@ -194,15 +193,11 @@ class QAEAnsatz(BaseAnsatz):
         n_blocks = 9
         params_per_block = 5
 
-        # 1. Apply the 9 encoding blocks
         for i in range(n_blocks):
             start = i * params_per_block
             end = start + params_per_block
-            # Pass only the chunk of 5 parameters for each block
             self._get_u_operator_qae(params[start:end])
 
-        # 2. Apply the final block (using parameters from index 45 onwards)
-        # params[45:48] will take the last 3 values if the total is 48
         self._get_u_qae_last(params[45:48])
 
 
@@ -214,22 +209,20 @@ class LCQHNNAnsatz(BaseAnsatz):
         [1] https://arxiv.org/pdf/2412.02059
         """
 
-        for layer in range(1):  # self.n_qubits
+        for i in range(self.n_qubits - 1):
+            self._apply_gate(
+                lambda i=i: qml.CNOT(wires=[i, i + 1]), wires=[i, i + 1], is_2q=True
+            )
 
-            for i in range(self.n_qubits - 1):
-                self._apply_gate(
-                    lambda i=i: qml.CNOT(wires=[i, i + 1]), wires=[i, i + 1], is_2q=True
-                )
+        for i in range(self.n_qubits):
+            self._apply_gate(
+                lambda i=i, p=params[i]: qml.RY(p, wires=i), wires=[i], is_2q=False
+            )
 
-            for i in range(self.n_qubits):
-                self._apply_gate(
-                    lambda i=i, p=params[i]: qml.RY(p, wires=i), wires=[i], is_2q=False
-                )
-
-            for i in range(self.n_qubits - 1, 0, -1):
-                self._apply_gate(
-                    lambda i=i: qml.CNOT(wires=[i - 1, i]), wires=[i - 1, i], is_2q=True
-                )
+        for i in range(self.n_qubits - 1, 0, -1):
+            self._apply_gate(
+                lambda i=i: qml.CNOT(wires=[i - 1, i]), wires=[i - 1, i], is_2q=True
+            )
 
         self._apply_gate(lambda: qml.Hadamard(wires=0), wires=[0], is_2q=False)
 
@@ -318,10 +311,8 @@ class QSVDDCircuit:
                 qml.BitFlip(p=readout_p, wires=i)
 
         if ansatz_type == "lcqhnn":
-            # Como o Hadamard já está no Ansatz, medimos todos em Pauli-Z
             result = tuple(qml.expval(qml.PauliZ(i)) for i in range(self.n_qubits))
         else:
-            # Padrão original para os outros métodos
             result = (
                 qml.expval(qml.PauliX(0) @ qml.PauliX(2)),
                 qml.expval(qml.PauliY(0) @ qml.PauliY(2)),

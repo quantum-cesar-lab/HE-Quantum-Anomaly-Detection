@@ -10,12 +10,10 @@ class QuantumEngine:
         self.ansatz_type = ansatz_type
         self.fm = fm
 
-        # Dynamic device selection
         if self.noisy:
             # Necessary to support ThermalRelaxation and DepolarizingChannel_2
             self.dev = qml.device("default.mixed", wires=self.n_qubits)
         else:
-            # Much faster for pure state simulations
             self.dev = qml.device("default.qubit", wires=self.n_qubits)
 
         self.circuit_logic = QSVDDCircuit(self.n_qubits)
@@ -28,7 +26,6 @@ class QuantumEngine:
         )
 
     def cost(self, params, X, Y):
-        # PennyLane's np.stack preserves differentiability
         predictions = np.stack([self.quantum_circuit(x, params) for x in X])
         loss_value = np.mean((predictions - Y) ** 2)
         return loss_value
