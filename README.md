@@ -1,4 +1,4 @@
-# QSVDD2 — Quantum Support Vector Data Description
+# Hardware-Efficient Quantum Anomaly Detection: Navigating Architectural Trade-offs for Financial Fraud
 
 This repository contains the implementation and experiments for the paper *"Hardware-Efficient Quantum Anomaly Detection: Navigating Architectural Trade-offs for Financial Fraud"*, benchmarking three Parameterized Quantum Circuit (PQC) architectures — **QCNN**, **QAE**, and **LCQHNN** — within the QSVDD framework for one-class classification on the Credit Card Fraud Detection dataset.
 
