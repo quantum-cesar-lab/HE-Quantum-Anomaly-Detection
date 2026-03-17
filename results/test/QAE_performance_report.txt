@@ -1,0 +1,9 @@
+Relatório de Performance - Ansatz: QAE
+Melhor Configuracao: B04S2000
+AUC Maximo: 0.9280000000000002
+------------------------------
+B04S2000: AUC = 0.9280
+B08S1000: AUC = 0.9099
+B16S500: AUC = 0.9001
+B32S250: AUC = 0.8567
+B64S125: AUC = 0.8533

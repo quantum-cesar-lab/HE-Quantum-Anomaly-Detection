@@ -10,25 +10,25 @@ class QuantumEngine:
         self.ansatz_type = ansatz_type
         self.fm = fm
 
-        # Seleção dinâmica do dispositivo
+        # Dynamic device selection
         if self.noisy:
-            # Necessário para suportar ThermalRelaxation e DepolarizingChannel_2
+            # Necessary to support ThermalRelaxation and DepolarizingChannel_2
             self.dev = qml.device("default.mixed", wires=self.n_qubits)
         else:
-            # Muito mais rápido para simulações de estado puro
+            # Much faster for pure state simulations
             self.dev = qml.device("default.qubit", wires=self.n_qubits)
 
         self.circuit_logic = QSVDDCircuit(self.n_qubits)
         self.quantum_circuit = qml.qnode(self.dev)(self._circuit_definition)
 
     def _circuit_definition(self, x, params):
-        """Esta é a função interna que define as portas quânticas."""
+        """Internal function that defines the quantum gates."""
         return self.circuit_logic.qc_complete_design(
             x, params, f_method=self.fm, noisy=self.noisy, ansatz_type=self.ansatz_type
         )
 
     def cost(self, params, X, Y):
-        # np.stack do PennyLane preserva a diferenciabilidade
+        # PennyLane's np.stack preserves differentiability
         predictions = np.stack([self.quantum_circuit(x, params) for x in X])
         loss_value = np.mean((predictions - Y) ** 2)
         return loss_value
