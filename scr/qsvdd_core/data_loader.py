@@ -36,6 +36,16 @@ class QuantumDataLoader:
 
         return X_quantum, y
 
+    def prepare_classic_data(self, df):
+        # Flow for classic algorithms (IF, LOF, SVM, Deep-SVDD)
+        X = df.drop("Class", axis=1).values
+        y = df["Class"].values
+
+
+        X_classic = self.std_scaler.fit_transform(X)
+
+        return X_classic, y
+
     def prepare_pca_data(self, df):
         """Novo Caminho: Focado em Angle Embedding"""
         X = df.drop("Class", axis=1).values
