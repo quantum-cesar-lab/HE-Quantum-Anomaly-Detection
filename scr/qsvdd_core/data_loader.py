@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 
 
 class QuantumDataLoader:
-    def __init__(self):
-        self.n_qubits = 5  # Defined for 32 amplitudes (2^5)
+    def __init__(self, n_qubits):
+        self.n_qubits = n_qubits  # Defined for 32 amplitudes (2^5)
         self.target_dim = 2**self.n_qubits
         self.scaler = MinMaxScaler()
 

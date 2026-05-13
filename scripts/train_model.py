@@ -16,9 +16,9 @@ def circuit_training(
     seed=42,
     fm="pennylane",
 ):
-    engine = QuantumEngine(n_qubits=5, noisy=noisy, fm=fm, ansatz_type=ansatz)
+    engine = QuantumEngine(n_qubits=4, noisy=noisy, fm=fm, ansatz_type=ansatz)
 
-    params_map = {"qcnn": 375, "lcqhnn": 5, "qae": 48}
+    params_map = {"qcnn": 180, "lcqhnn": 4, "qae": 26}
     n_params = params_map[ansatz]
 
     np.random.seed(seed)

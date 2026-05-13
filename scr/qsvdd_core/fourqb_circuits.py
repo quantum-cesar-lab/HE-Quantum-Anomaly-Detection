@@ -162,10 +162,10 @@ class QAEAnsatz(BaseAnsatz):
     def build(self, params):
         """
         Dynamic build for the QAE.
-        Total parameters required: (9 blocks * 5) + 3 = 48.
+        Total parameters required: (6 blocks * 4) + 2 = 26.
         """
-        n_blocks = 9
-        params_per_block = 5
+        n_blocks = 6
+        params_per_block = 4
 
         for i in range(n_blocks):
             start = i * params_per_block
