@@ -97,56 +97,30 @@ class QCNNAnsatz(BaseAnsatz):
         )
 
     def _get_conv_layer_1(self, params):
-
-        self._get_su_4_operator(params, wires=[0, 1])
-        self._get_su_4_operator(params, wires=[2, 3])
-
-        if self.noisy:
-            su4_total_time = (4 * self.gate_1q) + (3 * self.gate_2q)
-            qml.ThermalRelaxationError(0, self.t1, self.t2, su4_total_time, wires=4)
-
-        qml.Barrier(wires=range(5))
-
-        self._get_su_4_operator(params, wires=[4, 0])
-        if self.noisy:
-            for i in [1, 2, 3]:
-                qml.ThermalRelaxationError(0, self.t1, self.t2, su4_total_time, wires=i)
-
-        qml.Barrier(wires=range(5))
-
-        self._get_su_4_operator(params, wires=[1, 2])
-        self._get_su_4_operator(params, wires=[3, 4])
-        if self.noisy:
-            qml.ThermalRelaxationError(0, self.t1, self.t2, su4_total_time, wires=0)
-
-    def _get_conv_layer_2(self, params):
         self._get_su_4_operator(params, wires=[0, 1])
         self._get_su_4_operator(params, wires=[2, 3])
         self._get_su_4_operator(params, wires=[0, 3])
         self._get_su_4_operator(params, wires=[1, 2])
 
-    def _get_conv_layer_3(self, params):
+    def _get_conv_layer_2(self, params):
         self._get_su_4_operator(params, wires=[0, 1])
 
-    def build(self, params, number_params=75):  # 75
+    def build(self, params, number_params=45):  # 45
         param1 = params[0:number_params]
         param2 = params[number_params : 2 * number_params]
         param3 = params[2 * number_params : 3 * number_params]
-        param4 = params[3 * number_params : 4 * number_params]
-        param5 = params[4 * number_params : 5 * number_params]
+
 
         self._get_conv_layer_1(param1)
         self._get_conv_layer_1(param2)
         self._get_conv_layer_2(param3)
-        self._get_conv_layer_2(param4)
-        self._get_conv_layer_3(param5)
 
 
 class QAEAnsatz(BaseAnsatz):
 
     def _get_u_operator_qae(self, params):
-        nqubits = 5
-        ntrash = 3
+        nqubits = 4
+        ntrash = 2
 
         # 1. Initial rotations
         for i in range(nqubits):
@@ -177,7 +151,7 @@ class QAEAnsatz(BaseAnsatz):
                     )
 
     def _get_u_qae_last(self, params):
-        ntrash = 3
+        ntrash = 2
         for i in range(ntrash):
             self._apply_gate(
                 lambda i=i, p=params[i]: qml.RY(p, wires=i),  # Captura i e p
@@ -281,6 +255,7 @@ class QSVDDCircuit:
 
         return qml.from_qiskit(transpiled_fm)
 
+
     def qc_complete_design(
         self,
         amplitude_array,
@@ -314,8 +289,8 @@ class QSVDDCircuit:
             result = tuple(qml.expval(qml.PauliZ(i)) for i in range(self.n_qubits))
         else:
             result = (
-                qml.expval(qml.PauliX(0) @ qml.PauliX(2)),
-                qml.expval(qml.PauliY(0) @ qml.PauliY(2)),
-                qml.expval(qml.PauliZ(0) @ qml.PauliZ(2)),
+                qml.expval(qml.PauliX(0) @ qml.PauliX(1)),
+                qml.expval(qml.PauliY(0) @ qml.PauliY(1)),
+                qml.expval(qml.PauliZ(0) @ qml.PauliZ(1)),
             )
         return result
