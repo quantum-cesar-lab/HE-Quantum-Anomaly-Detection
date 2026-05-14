@@ -169,7 +169,7 @@ class QAEAnsatz(BaseAnsatz):
                 is_2q=False,
             )
 
-    def build(self, params, number_params):
+    def build(self, params, number_params=8):
         """
         Dynamic build for the QAE.
         Total parameters required: (9 blocks * n_qubits) + n_trash = 78.
