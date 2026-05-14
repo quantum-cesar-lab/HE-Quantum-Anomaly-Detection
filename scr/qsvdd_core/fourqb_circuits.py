@@ -172,7 +172,7 @@ class QAEAnsatz(BaseAnsatz):
             end = start + params_per_block
             self._get_u_operator_qae(params[start:end])
 
-        self._get_u_qae_last(params[45:48])
+        self._get_u_qae_last(params[24:26])
 
 
 class LCQHNNAnsatz(BaseAnsatz):
