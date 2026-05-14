@@ -13,7 +13,7 @@ def test(
     y_true_local = []
     y_pred_local = []
 
-    engine = QuantumEngine(5, noisy=noisy, ansatz_type=ansatz)
+    engine = QuantumEngine(8, noisy=noisy, ansatz_type=ansatz)
 
     for i in range(2):
         step_start_time = time.time()

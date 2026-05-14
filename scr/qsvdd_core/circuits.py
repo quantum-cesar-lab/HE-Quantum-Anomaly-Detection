@@ -97,36 +97,20 @@ class QCNNAnsatz(BaseAnsatz):
         )
 
     def _get_conv_layer_1(self, params):
-
-        self._get_su_4_operator(params, wires=[0, 1])
-        self._get_su_4_operator(params, wires=[2, 3])
-
-        if self.noisy:
-            su4_total_time = (4 * self.gate_1q) + (3 * self.gate_2q)
-            qml.ThermalRelaxationError(0, self.t1, self.t2, su4_total_time, wires=4)
-
-        qml.Barrier(wires=range(5))
-
-        self._get_su_4_operator(params, wires=[4, 0])
-        if self.noisy:
-            for i in [1, 2, 3]:
-                qml.ThermalRelaxationError(0, self.t1, self.t2, su4_total_time, wires=i)
-
-        qml.Barrier(wires=range(5))
-
-        self._get_su_4_operator(params, wires=[1, 2])
-        self._get_su_4_operator(params, wires=[3, 4])
-        if self.noisy:
-            qml.ThermalRelaxationError(0, self.t1, self.t2, su4_total_time, wires=0)
+        for i in range(0, 8, 2):
+            self._get_su_4_operator(params, wires=[i, i + 1])
+        for i in range(1, 7, 2):
+            self._get_su_4_operator(params, wires=[i, i + 1])
+        self._get_su_4_operator(params, wires=[7, 0])
 
     def _get_conv_layer_2(self, params):
-        self._get_su_4_operator(params, wires=[0, 1])
-        self._get_su_4_operator(params, wires=[2, 3])
-        self._get_su_4_operator(params, wires=[0, 3])
-        self._get_su_4_operator(params, wires=[1, 2])
+        self._get_su_4_operator(params, wires=[2, 4])
+        self._get_su_4_operator(params, wires=[6, 0])
+        self._get_su_4_operator(params, wires=[0, 2])
+        self._get_su_4_operator(params, wires=[4, 6])
 
     def _get_conv_layer_3(self, params):
-        self._get_su_4_operator(params, wires=[0, 1])
+        self._get_su_4_operator(params, wires=[2, 6])
 
     def build(self, params, number_params=75):  # 75
         param1 = params[0:number_params]
@@ -145,8 +129,8 @@ class QCNNAnsatz(BaseAnsatz):
 class QAEAnsatz(BaseAnsatz):
 
     def _get_u_operator_qae(self, params):
-        nqubits = 5
-        ntrash = 3
+        nqubits = 8
+        ntrash = 6
 
         # 1. Initial rotations
         for i in range(nqubits):
@@ -185,21 +169,38 @@ class QAEAnsatz(BaseAnsatz):
                 is_2q=False,
             )
 
-    def build(self, params):
+    def build(self, params, number_params):
         """
         Dynamic build for the QAE.
-        Total parameters required: (9 blocks * 5) + 3 = 48.
+        Total parameters required: (9 blocks * n_qubits) + n_trash = 78.
         """
-        n_blocks = 9
-        params_per_block = 5
 
-        for i in range(n_blocks):
-            start = i * params_per_block
-            end = start + params_per_block
-            self._get_u_operator_qae(params[start:end])
+        param1 = params[0:number_params]
+        param2 = params[number_params: 2 * number_params]
+        param3 = params[2 * number_params: 3 * number_params]
+        param4 = params[3 * number_params: 4 * number_params]
+        param5 = params[4 * number_params: 5 * number_params]
+        param6 = params[5 * number_params: 6 * number_params]
+        param7 = params[6 * number_params: 7 * number_params]
+        param8 = params[7 * number_params: 8 * number_params]
+        param9 = params[8 * number_params: 9 * number_params]
+        param10 = params[9 * number_params: 78]
 
-        self._get_u_qae_last(params[45:48])
+        self._get_u_operator_qae(param1)
+        self._get_u_operator_qae(param2)
+        self._get_u_operator_qae(param3)
+        self._get_u_operator_qae(param4)
+        self._get_u_operator_qae(param5)
+        self._get_u_operator_qae(param6)
+        self._get_u_operator_qae(param7)
+        self._get_u_operator_qae(param8)
+        self._get_u_operator_qae(param9)
 
+        def U_QAE_last(params):
+            ntrash = 6
+            for i in range(ntrash):
+                qml.RY(params[i], wires=i)
+        U_QAE_last(param10)
 
 class LCQHNNAnsatz(BaseAnsatz):
 
