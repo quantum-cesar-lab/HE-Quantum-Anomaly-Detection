@@ -98,14 +98,13 @@ class QCNNAnsatz(BaseAnsatz):
 
     def _get_conv_layer_1(self, params):
         self._get_su_4_operator(params, wires=[0, 1])
-        self._get_su_4_operator(params, wires=[2, 3])
-        self._get_su_4_operator(params, wires=[0, 3])
+        self._get_su_4_operator(params, wires=[0, 2])
         self._get_su_4_operator(params, wires=[1, 2])
 
     def _get_conv_layer_2(self, params):
         self._get_su_4_operator(params, wires=[0, 1])
 
-    def build(self, params, number_params=45):  # 45
+    def build(self, params, number_params=15):  # 45
         param1 = params[0:number_params]
         param2 = params[number_params : 2 * number_params]
         param3 = params[2 * number_params : 3 * number_params]
@@ -119,8 +118,8 @@ class QCNNAnsatz(BaseAnsatz):
 class QAEAnsatz(BaseAnsatz):
 
     def _get_u_operator_qae(self, params):
-        nqubits = 4
-        ntrash = 2
+        nqubits = 3
+        ntrash = 1
 
         # 1. Initial rotations
         for i in range(nqubits):
@@ -151,7 +150,7 @@ class QAEAnsatz(BaseAnsatz):
                     )
 
     def _get_u_qae_last(self, params):
-        ntrash = 2
+        ntrash = 1
         for i in range(ntrash):
             self._apply_gate(
                 lambda i=i, p=params[i]: qml.RY(p, wires=i),  # Captura i e p
@@ -162,17 +161,17 @@ class QAEAnsatz(BaseAnsatz):
     def build(self, params):
         """
         Dynamic build for the QAE.
-        Total parameters required: (9 blocks * 5) + 3 = 48.
+        Total parameters required: (2 blocks * 3) + 1 = 7.
         """
-        n_blocks = 9
-        params_per_block = 5
+        n_blocks = 2
+        params_per_block = 3
 
         for i in range(n_blocks):
             start = i * params_per_block
             end = start + params_per_block
             self._get_u_operator_qae(params[start:end])
 
-        self._get_u_qae_last(params[45:48])
+        self._get_u_qae_last(params[6:7])
 
 
 class LCQHNNAnsatz(BaseAnsatz):

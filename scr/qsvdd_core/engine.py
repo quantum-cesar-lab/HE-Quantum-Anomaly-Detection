@@ -1,4 +1,4 @@
-from .circuits import QSVDDCircuit
+from .three_qb_circuits import QSVDDCircuit
 import pennylane as qml
 from pennylane import numpy as np
 
