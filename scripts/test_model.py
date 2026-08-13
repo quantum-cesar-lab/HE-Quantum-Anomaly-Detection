@@ -51,8 +51,8 @@ def mean_auc(
     params_list, n_train, X_test, Y_test, center_train, noisy=False, ansatz="qcnn"
 ):
     """
-    Calcula a média e o desvio padrão do AUC repetindo o teste 5 vezes.
-    O operador **kwargs captura todos os arrays e bools automaticamente.
+    Calculates the mean and standard deviation of the AUC by repeating the test 5 times.
+    The **kwargs operator captures all arrays and bools automatically.
     """
     auc_list = []
     for i in range(5):
@@ -89,7 +89,6 @@ def best_batch(method="qae"):
                 n_train, X_test, Y_test, est_params, center_train, ansatz=method
             )
 
-            # 4. Store in the dictionary using the variation as key
             test_results[var] = {
                 "auc": auc,
                 "y_pred": y_pred,
@@ -113,14 +112,11 @@ def save_test_results(test_results, method="qae"):
 
     upper_method = method.upper()
 
-    # 1. Find the configuration with the highest AUC
     best_config = max(test_results, key=lambda k: test_results[k]["auc"])
     best_data = test_results[best_config]
 
     print(f"The best model was: {best_config} with AUC = {best_data['auc']:.4f}")
 
-    # 2. Save the complete dictionary (optional, in JSON format for easy reading)
-    # Note: we convert numpy arrays to lists for JSON to accept
     full_results_serializable = {
         k: {
             "auc": v["auc"],
@@ -133,7 +129,6 @@ def save_test_results(test_results, method="qae"):
     with open(f"../results/test/All_Results_{upper_method}.json", "w") as f:
         json.dump(full_results_serializable, f, indent=4)
 
-    # 3. Save only the data of the best result for later use
     np.save(
         f"../results/test/BEST_{upper_method}_{best_config}_METRICS.npy",
         {
@@ -145,8 +140,7 @@ def save_test_results(test_results, method="qae"):
         },
     )
 
-    # 4. Save a text summary for your report
-    with open(f"../results/test/{upper_method}resumo_performance.txt", "w") as f:
+    with open(f"../results/test/{upper_method}performance_summary.txt", "w") as f:
         f.write(f"Performance Report - Ansatz: {upper_method}\n")
         f.write(f"Best Configuration: {best_config}\n")
         f.write(f"Max AUC: {best_data['auc']}\n")

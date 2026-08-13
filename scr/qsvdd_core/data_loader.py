@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 class QuantumDataLoader:
     def __init__(self):
         self.n_qubits = 5  # Defined for 32 amplitudes (2^5)
-        self.target_dim = 2**self.n_qubits
+        self.target_dim = 2 ** self.n_qubits
         self.scaler = MinMaxScaler()
 
         self.std_scaler = StandardScaler()
@@ -17,7 +17,6 @@ class QuantumDataLoader:
         self.angle_map_scaler = MinMaxScaler(feature_range=(0, np.pi))
 
     def prepare_fraud_data(self, df):
-
         X = df.drop("Class", axis=1).values
         y = df["Class"].values
 
@@ -37,7 +36,6 @@ class QuantumDataLoader:
         return X_quantum, y
 
     def prepare_bc_data(self, x_data):
-
         X_scaled = self.scaler.fit_transform(x_data)
 
         n_samples, n_features = X_scaled.shape
@@ -52,9 +50,8 @@ class QuantumDataLoader:
         X_quantum = X_padded / norms
 
         return X_quantum
-    
-    def prepare_census_data(self, x_data):
 
+    def prepare_census_data(self, x_data):
         X_scaled = self.scaler.fit_transform(x_data)
 
         n_samples, n_features = X_scaled.shape
@@ -75,13 +72,12 @@ class QuantumDataLoader:
         X = df.drop("Class", axis=1).values
         y = df["Class"].values
 
-
         X_classic = self.std_scaler.fit_transform(X)
 
         return X_classic, y
 
     def prepare_pca_data(self, df):
-        """Novo Caminho: Focado em Angle Embedding"""
+        """New Path: Focused on Angle Embedding"""
         X = df.drop("Class", axis=1).values
         y = df["Class"].values
 
@@ -94,7 +90,7 @@ class QuantumDataLoader:
         return X_angles, y
 
     def plot_correlation_matrix(self, df, scale=0.7):
-        """Mostra a correlação apenas entre as features (X)"""
+        """Shows the correlation only between the features (X)"""
         df_features = df.drop("Class", axis=1)
         df_features_std = self.std_scaler.fit_transform(df_features)
         df_scaled = pd.DataFrame(df_features_std, columns=df_features.columns)
@@ -116,11 +112,11 @@ class QuantumDataLoader:
             cbar_kws={"shrink": 0.8},
         )
 
-        plt.title("Matriz de Correlação das Features (Sem o Rótulo)")
+        plt.title("Feature Correlation Matrix (Without Label)")
         plt.show()
 
     def plot_explained_variance(self, df):
-        """Gera o gráfico de cotovelo para justificar o número de qubits"""
+        """Generates the elbow plot to justify the number of qubits"""
         X = df.drop("Class", axis=1).values
         X_std = self.std_scaler.fit_transform(X)
 
@@ -141,17 +137,17 @@ class QuantumDataLoader:
             x=self.n_qubits,
             color="r",
             linestyle=":",
-            label=f"Atual: {self.n_qubits} Qubits",
+            label=f"Current: {self.n_qubits} Qubits",
         )
         plt.axhline(y=cumulative_variance[self.n_qubits - 1], color="r", linestyle=":")
 
-        plt.xlabel("Número de Componentes Principais (Qubits)")
-        plt.ylabel("Variância Explicada Acumulada")
-        plt.title("Análise de Dimensionalidade para o QSVDD")
+        plt.xlabel("Number of Principal Components (Qubits)")
+        plt.ylabel("Cumulative Explained Variance")
+        plt.title("Dimensionality Analysis for QSVDD")
         plt.grid(True, alpha=0.3)
         plt.legend()
         plt.show()
 
         print(
-            f"Variância com {self.n_qubits} qubits: {cumulative_variance[self.n_qubits - 1]:.2%}"
+            f"Variance with {self.n_qubits} qubits: {cumulative_variance[self.n_qubits - 1]:.2%}"
         )
