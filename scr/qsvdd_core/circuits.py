@@ -301,7 +301,7 @@ class QSVDDCircuit:
         }
 
         if ansatz_type not in ansatz_classes:
-            raise ValueError(f"Ansatz '{ansatz_type}' não reconhecido.")
+            raise ValueError(f"Ansatz '{ansatz_type}' not recognized.")
 
         ansatz_obj = ansatz_classes[ansatz_type](self.n_qubits, noisy=noisy)
         ansatz_obj.build(params)
